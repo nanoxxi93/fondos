@@ -1,0 +1,15 @@
+version: "3"
+services:
+  api:
+    container_name: api-fondos
+    image: nanoxxi93/api-fondos
+    env_file: .env.development
+    ports:
+      - "5001:3000"
+    deploy:
+      restart_policy:
+        condition: any
+      resources:
+        limits:
+          cpus: "1"
+          memory: 256M
