@@ -3,6 +3,7 @@ services:
   api:
     container_name: api-fondos
     image: nanoxxi93/api-fondos
+    build: .
     env_file: .env.development
     ports:
       - "5001:3000"
