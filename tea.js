@@ -17,7 +17,7 @@ const sources = {
   },
 };
 
-export const tea = async ({ PERIOD = 365, CURRENCY = "USD", RISK = 4 }) => {
+export const tea = async ({ PERIOD = 30, CURRENCY, RISK }) => {
   const result = {};
 
   const query = {
@@ -38,7 +38,7 @@ export const tea = async ({ PERIOD = 365, CURRENCY = "USD", RISK = 4 }) => {
         continue;
       }
 
-      if (risk > RISK) {
+      if (RISK && risk > RISK) {
         continue;
       }
 
@@ -76,7 +76,7 @@ export const tea = async ({ PERIOD = 365, CURRENCY = "USD", RISK = 4 }) => {
       const { name, currency, risk, fee } = sources[source].FONDO[fondo];
 
       summary[name] = {
-        var: +((dates[end] / dates[start] - 1) * (100 - fee)).toFixed(2),
+        value: +((dates[end] / dates[start] - 1) * (100 - fee)).toFixed(2),
         currency,
         risk,
       };
@@ -84,7 +84,7 @@ export const tea = async ({ PERIOD = 365, CURRENCY = "USD", RISK = 4 }) => {
   }
 
   return Object.entries(summary)
-    .sort((a, b) => (b[1].var > a[1].var ? 1 : -1))
+    .sort((a, b) => (b[1].value > a[1].value ? 1 : -1))
     .reduce(
       (acc, [name, value], index) => ({ ...acc, [index]: { ...value, name } }),
       {}

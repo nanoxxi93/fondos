@@ -41,13 +41,47 @@ mongoInit().then(() => {
   });
 
   app.get("/", async (req, res) => {
-    const { period, currency, risk } = req.query;
+    const { period = 30, currency, risk } = req.query;
     const result = await tea({
-      PERIOD: period ? +period : 30,
+      PERIOD: +period,
       CURRENCY: currency,
-      RISK: risk ? +risk : 7,
+      RISK: risk ? +risk : undefined,
     });
-    res.status(200).json(result);
+    let html = `
+      <!DOCTYPE html>
+      <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Fondos Mutuos</title>
+        </head>
+        <body style="width: fit-content; margin: auto;">
+          <h1>Fondos Mutuos - últimos ${period} días</h1>
+          <table style="border-collapse: collapse;">
+            <tr>
+              <th style="border: 1px solid black; padding: 2px;">Nombre</th>
+              <th style="border: 1px solid black; padding: 2px;">Moneda</th>
+              <th style="border: 1px solid black; padding: 2px;">Riesgo</th>
+              <th style="border: 1px solid black; padding: 2px;">Valor</th>
+            </tr>
+    `;
+    Object.values(result).forEach(({ name, currency, risk, value }) => {
+      html += `
+        <tr>
+          <td style="border: 1px solid black; padding: 2px;">${name}</td>
+          <td style="border: 1px solid black; padding: 2px; text-align: center;">${currency}</td>
+          <td style="border: 1px solid black; padding: 2px; text-align: center;">${risk}</td>
+          <td style="border: 1px solid black; padding: 2px; text-align: center;">${value}</td>
+        </tr>
+      `;
+    });
+    html += `
+          </table>
+        </body>
+      </html>
+    `;
+
+    res.status(200).send(html);
   });
 
   app.listen(PORT, () => {
