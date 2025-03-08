@@ -211,7 +211,7 @@ const getTybaQuota = async ({
     console.info(`${idFondo} ${idSerie} ${fromDate} ${toDate} fetch success`);
 
     await Promise.all(
-      json.graphData?.map(
+      json.graphData?.slice(-days)?.map(
         async ({ interval, value }) =>
           await TybaModel.updateOne(
             {
