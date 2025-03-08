@@ -242,8 +242,8 @@ const getTybaQuota = async ({
 };
 
 export const run = async ({ days, apikey }) => {
-  for (const [idSerie, { currency }] of Object.entries(TYBA_FONDO)) {
-    await getTybaQuota({ idSerie, currency, days, apikey });
+  for (const [idFondo, { currency }] of Object.entries(TYBA_FONDO)) {
+    await getTybaQuota({ idFondo, currency, days, apikey });
   }
   // await Promise.all(
   //   Object.entries(TYBA_FONDO).map(async ([idFondo]) => {
