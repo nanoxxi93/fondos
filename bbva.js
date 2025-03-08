@@ -1,6 +1,7 @@
 "use strict";
 
 import mongoose, { Schema } from "mongoose";
+import puppeteer from "puppeteer";
 
 // https://fondos.bbva.pe/personas/productos/conservadores/bbva-tesoreria-soles.html
 
@@ -218,8 +219,32 @@ const getBbvaQuota = async ({
 };
 
 export const run = async ({ days, apikey }) => {
-  for (const [idSerie, { currency }] of Object.entries(BBVA_FONDO)) {
-    await getBbvaQuota({ idSerie, currency, days, apikey });
+  if (!apikey) {
+    const browser = await puppeteer.launch({
+      headless: false,
+    });
+    const page = await browser.newPage();
+
+    page.on("response", async (response) => {
+      const request = response.request();
+      if (request.resourceType() === "xhr") {
+        const tsec = response.headers()["tsec"];
+        if (tsec) {
+          apikey = tsec;
+        }
+      }
+    });
+
+    await page.goto(
+      "https://fondos.bbva.pe/personas/productos/conservadores/bbva-tesoreria-soles.html",
+      { waitUntil: "networkidle0" }
+    );
+
+    await browser.close();
+  }
+
+  for (const [idFondo, { currency }] of Object.entries(BBVA_FONDO)) {
+    await getBbvaQuota({ idFondo, currency, days, apikey });
   }
   // await Promise.all(
   //   Object.entries(BBVA_FONDO).map(async ([idFondo, { currency }]) => {
