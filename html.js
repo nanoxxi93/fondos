@@ -15,7 +15,9 @@ export const getHTML = ({ days, chartData }) => {
           }
           .container {
             display: flex;
-            width: 576px;
+            margin: auto;
+          }
+          canvas {
             margin: auto;
           }
           table {
