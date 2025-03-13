@@ -156,11 +156,4 @@ export const tea = async ({ PERIOD = 30, CURRENCY, RISK }) => {
     );
 
   return { labels, datasets };
-
-  //   return Object.entries(summary)
-  //     .sort((a, b) => (b[1].value > a[1].value ? 1 : -1))
-  //     .reduce(
-  //       (acc, [name, value], index) => ({ ...acc, [index]: { ...value, name } }),
-  //       {}
-  //     );
 };
