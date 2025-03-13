@@ -2,7 +2,6 @@
 
 import mongoose, { Schema } from "mongoose";
 
-const ERNI_APIKEY = process.env.ERNI_APIKEY;
 const ERNI_URL =
   "https://api.inteligogroup.com/investorbackend-prod/valorcuota";
 
@@ -137,7 +136,7 @@ const getErniQuota = async ({
     const res = await fetch(ERNI_URL, {
       method: "POST",
       headers: {
-        "ocp-apim-subscription-key": ERNI_APIKEY,
+        "ocp-apim-subscription-key": process.env.ERNI_APIKEY,
       },
       body: JSON.stringify({
         idFondo,
