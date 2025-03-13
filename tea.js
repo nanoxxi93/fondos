@@ -17,7 +17,32 @@ const sources = {
   },
 };
 
+const capitalize = (str) => {
+  return str.toLowerCase().replace(/(^|\s)\S/g, (char) => char.toUpperCase());
+};
+
+const normalizeValues = (values, firstValue) => {
+  const normalizedValues = [];
+
+  let previousValue = null;
+
+  for (const value of values) {
+    firstValue = firstValue ? firstValue : values[0];
+
+    if (value === null) {
+      normalizedValues.push(previousValue);
+    } else {
+      const normalizedValue = ((value - firstValue) / firstValue) * 100;
+      previousValue = normalizedValue;
+      normalizedValues.push(normalizedValue);
+    }
+  }
+
+  return normalizedValues;
+};
+
 export const tea = async ({ PERIOD = 30, CURRENCY, RISK }) => {
+  const allDates = new Set();
   const result = {};
 
   const query = {
@@ -57,11 +82,14 @@ export const tea = async ({ PERIOD = 30, CURRENCY, RISK }) => {
       }
 
       const dateStr = date.toISOString().slice(0, 10);
+      allDates.add(dateStr);
       result[source][key][dateStr] = value;
     }
   }
 
-  const summary = {};
+  const sortedDates = Array.from(allDates).sort();
+
+  const summary = [];
   for (const [source, fondos] of Object.entries(result)) {
     for (const [fondo, dates] of Object.entries(fondos)) {
       const array = Object.entries(dates).map(([date, value]) => ({
@@ -70,23 +98,69 @@ export const tea = async ({ PERIOD = 30, CURRENCY, RISK }) => {
       }));
       const filter = array.filter(({ value }) => value);
       const sort = filter.sort((a, b) => new Date(a.date) - new Date(b.date));
-      const start = sort.at(0).date;
-      const end = sort.at(-1).date;
+      const firstValue = sort.at(0).value;
+      const lastValue = sort.at(-1).value;
+
+      const dateMap = new Map(sort.map((entry) => [entry.date, entry.value]));
+      const values = sortedDates.map((date) =>
+        dateMap.has(date) ? dateMap.get(date) : null
+      );
 
       const { name, currency, risk, fee } = sources[source].FONDO[fondo];
 
-      summary[name] = {
-        value: +((dates[end] / dates[start] - 1) * (100 - fee)).toFixed(2),
+      summary.push({
+        id: name,
+        source,
+        values: values,
+        firstValue,
+        lastValue,
+        value: +((lastValue / firstValue - 1) * (100 - fee)).toFixed(2),
         currency,
         risk,
-      };
+      });
     }
   }
 
-  return Object.entries(summary)
-    .sort((a, b) => (b[1].value > a[1].value ? 1 : -1))
-    .reduce(
-      (acc, [name, value], index) => ({ ...acc, [index]: { ...value, name } }),
-      {}
+  const labels = sortedDates;
+  const datasets = summary
+    .sort((a, b) => a.id.toLowerCase().localeCompare(b.id.toLowerCase()))
+    .map(
+      (
+        { id, source, values, firstValue, lastValue, value, currency, risk },
+        index
+      ) => {
+        return {
+          label: capitalize(id.replace(/_/g, " ")),
+          data: normalizeValues(values, firstValue),
+          backgroundColor: `rgba(${Math.floor(
+            Math.random() * 255
+          )}, ${Math.floor(Math.random() * 255)}, ${Math.floor(
+            Math.random() * 255
+          )}, 0.2)`,
+          borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(
+            Math.random() * 255
+          )}, ${Math.floor(Math.random() * 255)}, 1)`,
+          borderWidth: 1,
+          hidden: true,
+          meta: {
+            index,
+            source,
+            value,
+            firstValue,
+            lastValue,
+            currency,
+            risk,
+          },
+        };
+      }
     );
+
+  return { labels, datasets };
+
+  //   return Object.entries(summary)
+  //     .sort((a, b) => (b[1].value > a[1].value ? 1 : -1))
+  //     .reduce(
+  //       (acc, [name, value], index) => ({ ...acc, [index]: { ...value, name } }),
+  //       {}
+  //     );
 };
