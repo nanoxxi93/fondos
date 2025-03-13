@@ -24,16 +24,14 @@ const capitalize = (str) => {
 const normalizeValues = (values, firstValue) => {
   const normalizedValues = [];
 
-  let previousValue = null;
-
   for (const value of values) {
     firstValue = firstValue ? firstValue : values[0];
 
     if (value === null) {
-      normalizedValues.push(previousValue);
+      normalizedValues.push(null);
     } else {
       const normalizedValue = ((value - firstValue) / firstValue) * 100;
-      previousValue = normalizedValue;
+
       normalizedValues.push(normalizedValue);
     }
   }
@@ -41,13 +39,13 @@ const normalizeValues = (values, firstValue) => {
   return normalizedValues;
 };
 
-export const tea = async ({ PERIOD = 30, CURRENCY, RISK }) => {
+export const tea = async ({ DAYS = 30, CURRENCY, RISK }) => {
   const allDates = new Set();
   const result = {};
 
   const query = {
     date: {
-      $gte: new Date(new Date().setDate(new Date().getDate() - PERIOD)),
+      $gte: new Date(new Date().setDate(new Date().getDate() - DAYS)),
     },
   };
 
@@ -141,6 +139,7 @@ export const tea = async ({ PERIOD = 30, CURRENCY, RISK }) => {
             Math.random() * 255
           )}, ${Math.floor(Math.random() * 255)}, 1)`,
           borderWidth: 1,
+          pointRadius: 1,
           hidden: true,
           meta: {
             index,
