@@ -113,7 +113,7 @@ export const getHTML = ({ days, chartData }) => {
                   <td style="color: ${borderColor}">${label}</td>
                   <td style="color: ${borderColor}">${currency}</td>
                   <td style="color: ${borderColor}">${risk}</td>
-                  <td style="color: ${borderColor}">${value}</td>
+                  <td style="color: ${borderColor}">${value} %</td>
                 </tr>
             `;
     });
