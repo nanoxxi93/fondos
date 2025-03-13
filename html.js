@@ -45,7 +45,7 @@ export const getHTML = ({ days, chartData }) => {
         </style>
       </head>
       <body>
-        <h1>Fondos Mutuos - últimos ${days} días</h1>
+        <h1 style="text-align: center">Fondos Mutuos - últimos ${days} días</h1>
 
         <!-- Checkboxes agrupados por source -->
         <div class="checkbox-group">
