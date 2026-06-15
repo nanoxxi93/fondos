@@ -183,6 +183,7 @@ const getTybaQuota = async ({
   toDate,
   days = 30,
   apikey,
+  appproof,
 }) => {
   const today = new Date();
   const prevDate = new Date(new Date().setDate(today.getDate() - days));
@@ -199,6 +200,7 @@ const getTybaQuota = async ({
       method: "GET",
       headers: {
         authorization: apikey || TYBA_APIKEY,
+        "X-App-Proof": appproof,
       },
     });
 
@@ -241,9 +243,9 @@ const getTybaQuota = async ({
   }
 };
 
-export const run = async ({ days, apikey }) => {
+export const run = async ({ days, apikey, appproof }) => {
   for (const [idFondo, { currency }] of Object.entries(TYBA_FONDO)) {
-    await getTybaQuota({ idFondo, currency, days, apikey });
+    await getTybaQuota({ idFondo, currency, days, apikey, appproof });
   }
   // await Promise.all(
   //   Object.entries(TYBA_FONDO).map(async ([idFondo]) => {
