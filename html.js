@@ -51,17 +51,54 @@ export const getHTML = ({ days, currency = "", risk = "", chartData }) => {
           }
           .filters {
             display: flex;
-            gap: 12px;
             justify-content: center;
-            align-items: end;
+            align-items: flex-end;
+            gap: 16px;
             flex-wrap: wrap;
-            margin-bottom: 20px;
+            max-width: 720px;
+            margin: 0 auto 28px;
+            padding: 16px 20px;
+            background: #f7f7f7;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-sizing: border-box;
           }
-          .filters label {
+          .filter-field {
             display: flex;
             flex-direction: column;
+            gap: 6px;
+          }
+          .filter-field label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+          }
+          .filters input,
+          .filters select,
+          .filters button {
+            height: 36px;
+            font-family: inherit;
             font-size: 14px;
-            gap: 4px;
+            border-radius: 6px;
+            box-sizing: border-box;
+          }
+          .filters input,
+          .filters select {
+            min-width: 128px;
+            padding: 0 10px;
+            border: 1px solid #ccc;
+            background: #fff;
+          }
+          .filters button {
+            padding: 0 18px;
+            border: none;
+            background: #222;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+          }
+          .filters button:hover {
+            background: #444;
           }
           .container {
             display: flex;
@@ -84,7 +121,7 @@ export const getHTML = ({ days, currency = "", risk = "", chartData }) => {
             background-color: #f2f2f2;
           }
           button {
-            margin-bottom: 10px;
+            margin: 0;
           }
           .checkbox-group {
             display: flex;
@@ -100,19 +137,22 @@ export const getHTML = ({ days, currency = "", risk = "", chartData }) => {
         <h1 style="text-align: center">Fondos Mutuos - últimos ${escapeHtml(days)} días</h1>
 
         <form class="filters" method="get" action="/">
-          <label>Días
-            <input type="number" name="days" min="1" max="3650" value="${escapeHtml(days)}" />
-          </label>
-          <label>Moneda
-            <select name="currency">
+          <div class="filter-field">
+            <label for="filter-days">Días</label>
+            <input id="filter-days" type="number" name="days" min="1" max="3650" value="${escapeHtml(days)}" />
+          </div>
+          <div class="filter-field">
+            <label for="filter-currency">Moneda</label>
+            <select id="filter-currency" name="currency">
               <option value="" ${currency ? "" : "selected"}>Todas</option>
               <option value="PEN" ${currency === "PEN" ? "selected" : ""}>PEN</option>
               <option value="USD" ${currency === "USD" ? "selected" : ""}>USD</option>
             </select>
-          </label>
-          <label>Riesgo máximo
-            <input type="number" name="risk" min="1" max="7" value="${escapeHtml(risk ?? "")}" />
-          </label>
+          </div>
+          <div class="filter-field">
+            <label for="filter-risk">Riesgo máximo</label>
+            <input id="filter-risk" type="number" name="risk" min="1" max="7" value="${escapeHtml(risk ?? "")}" />
+          </div>
           <button type="submit">Filtrar</button>
         </form>
 
