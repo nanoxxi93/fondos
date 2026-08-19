@@ -2,14 +2,20 @@
   "name": "fondos",
   "type": "module",
   "version": "1.0.0",
-  "description": "",
+  "description": "Comparador de fondos mutuos ERNI, BBVA y Tyba",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "lint": "eslint ."
   },
-  "keywords": [],
+  "keywords": ["fondos", "erni", "bbva", "tyba"],
   "author": "Hernando Arima",
   "license": "ISC",
+  "engines": {
+    "node": ">=24",
+    "npm": ">=12"
+  },
   "dependencies": {
     "dotenv": "^16.4.7",
     "express": "^4.21.2",

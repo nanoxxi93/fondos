@@ -1,5 +1,41 @@
-export const getHTML = ({ days, chartData }) => {
-  let html = `
+import { escapeHtml, toSafeJson } from "./utils.js";
+
+const checkboxColumn = (source, datasets) => `
+          <div class="checkbox-column">
+            <h3>Fuente ${escapeHtml(source)}</h3>
+            ${datasets
+              .map(
+                ({ label, borderColor, meta: { index } }) => `
+                    <input type="checkbox" id="dataset-${index}" value="${index}" onchange="toggle(${index})" />
+                    <label for="dataset-${index}" style="color: ${escapeHtml(borderColor)}">${escapeHtml(label)}</label>
+                    <br />
+                `
+              )
+              .join("")}
+          </div>
+`;
+
+export const getHTML = ({ days, currency = "", risk = "", chartData }) => {
+  const bySource = {};
+  for (const dataset of chartData.datasets) {
+    (bySource[dataset.meta.source] ??= []).push(dataset);
+  }
+
+  const rows = [...chartData.datasets]
+    .sort((a, b) => b.meta.value - a.meta.value)
+    .map(
+      ({ label, borderColor, meta: { value, currency, risk } }) => `
+                <tr>
+                  <td style="color: ${escapeHtml(borderColor)}">${escapeHtml(label)}</td>
+                  <td style="color: ${escapeHtml(borderColor)}">${escapeHtml(currency)}</td>
+                  <td style="color: ${escapeHtml(borderColor)}">${escapeHtml(risk)}</td>
+                  <td style="color: ${escapeHtml(borderColor)}">${escapeHtml(value)} %</td>
+                </tr>
+            `
+    )
+    .join("");
+
+  return `
     <!DOCTYPE html>
     <html lang="es">
       <head>
@@ -12,6 +48,20 @@ export const getHTML = ({ days, chartData }) => {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
+          }
+          .filters {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: end;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+          }
+          .filters label {
+            display: flex;
+            flex-direction: column;
+            font-size: 14px;
+            gap: 4px;
           }
           .container {
             display: flex;
@@ -47,56 +97,35 @@ export const getHTML = ({ days, chartData }) => {
         </style>
       </head>
       <body>
-        <h1 style="text-align: center">Fondos Mutuos - últimos ${days} días</h1>
+        <h1 style="text-align: center">Fondos Mutuos - últimos ${escapeHtml(days)} días</h1>
 
-        <!-- Checkboxes agrupados por source -->
+        <form class="filters" method="get" action="/">
+          <label>Días
+            <input type="number" name="days" min="1" max="3650" value="${escapeHtml(days)}" />
+          </label>
+          <label>Moneda
+            <select name="currency">
+              <option value="" ${currency ? "" : "selected"}>Todas</option>
+              <option value="PEN" ${currency === "PEN" ? "selected" : ""}>PEN</option>
+              <option value="USD" ${currency === "USD" ? "selected" : ""}>USD</option>
+            </select>
+          </label>
+          <label>Riesgo máximo
+            <input type="number" name="risk" min="1" max="7" value="${escapeHtml(risk ?? "")}" />
+          </label>
+          <button type="submit">Filtrar</button>
+        </form>
+
         <div class="checkbox-group">
-          <div class="checkbox-column">
-            <h3>Fuente ERNI</h3>
-            ${chartData.datasets
-              .filter((dataset) => dataset.meta.source === "ERNI")
-              .map(
-                ({ label, borderColor, meta: { index } }) => `
-                    <input type="checkbox" id="dataset-${index}" value="${index}" onchange="toggle(${index})" />
-                    <label for="dataset-${index}" style="color: ${borderColor}">${label}</label>
-                    <br />
-                `
-              )
-              .join("")}
-          </div>
-          <div class="checkbox-column">
-            <h3>Fuente BBVA</h3>
-            ${chartData.datasets
-              .filter((dataset) => dataset.meta.source === "BBVA")
-              .map(
-                ({ label, borderColor, meta: { index } }) => `
-                    <input type="checkbox" id="dataset-${index}" value="${index}" onchange="toggle(${index})" />
-                    <label for="dataset-${index}" style="color: ${borderColor}">${label}</label>
-                    <br />
-                `
-              )
-              .join("")}
-          </div>
-          <div class="checkbox-column">
-            <h3>Fuente TYBA</h3>
-            ${chartData.datasets
-              .filter((dataset) => dataset.meta.source === "TYBA")
-              .map(
-                ({ label, borderColor, meta: { index } }) => `
-                    <input type="checkbox" id="dataset-${index}" value="${index}" onchange="toggle(${index})" />
-                    <label for="dataset-${index}" style="color: ${borderColor}">${label}</label>
-                    <br />
-                `
-              )
-              .join("")}
-          </div>
+          ${Object.entries(bySource)
+            .map(([source, datasets]) => checkboxColumn(source, datasets))
+            .join("")}
         </div>
 
         <div class="container">
           <canvas id="myChart" width="1366" height="768"></canvas>
         </div>
 
-        <!-- Tabla resumen centrada -->
         <table>
           <tr>
             <th>Nombre</th>
@@ -104,42 +133,24 @@ export const getHTML = ({ days, chartData }) => {
             <th>Riesgo</th>
             <th>Rendimiento</th>
           </tr>
-    `;
-
-  // Agregar filas a la tabla
-  Object.values(chartData.datasets)
-    .sort((a, b) => (b.meta.value > a.meta.value ? 1 : -1))
-    .forEach(({ label, borderColor, meta: { value, currency, risk } }) => {
-      html += `
-                <tr>
-                  <td style="color: ${borderColor}">${label}</td>
-                  <td style="color: ${borderColor}">${currency}</td>
-                  <td style="color: ${borderColor}">${risk}</td>
-                  <td style="color: ${borderColor}">${value} %</td>
-                </tr>
-            `;
-    });
-
-  html += `
+          ${rows}
         </table>
         
         <script>
-          // Datos transformados
-          const chartData = {
-              labels: ${JSON.stringify(chartData.labels)},
-              datasets: ${JSON.stringify(chartData.datasets)},
-          };
+          const chartData = ${toSafeJson({
+            labels: chartData.labels,
+            datasets: chartData.datasets,
+          })};
     
-          // Configurar y renderizar el gráfico
           const ctx = document.getElementById('myChart').getContext('2d');
           const myChart = new Chart(ctx, {
-              type: 'line', // Tipo de gráfico (line, bar, etc.)
+              type: 'line',
               data: chartData,
               options: {
                   responsive: true,
                   plugins: {
                       legend: {
-                          display: false, // Ocultar la leyenda superior
+                          display: false,
                       },
                   },
                   scales: {
@@ -155,7 +166,6 @@ export const getHTML = ({ days, chartData }) => {
               },
           });
 
-          // Función para mostrar/ocultar datasets
           const toggle = (index) => {
               const checkbox = document.getElementById('dataset-' + index);
               myChart.getDatasetMeta(index).hidden = !checkbox.checked;
@@ -165,5 +175,4 @@ export const getHTML = ({ days, chartData }) => {
       </body>
     </html>
     `;
-  return html;
 };

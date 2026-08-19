@@ -1,6 +1,7 @@
 import { BBVA_FONDO, BbvaModel } from "./bbva.js";
 import { ERNI_FONDO, ErniModel } from "./erni.js";
 import { TYBA_FONDO, TybaModel } from "./tyba.js";
+import { capitalize, colorFromKey } from "./utils.js";
 
 const sources = {
   ERNI: {
@@ -17,89 +18,63 @@ const sources = {
   },
 };
 
-const capitalize = (str) => {
-  return str.toLowerCase().replace(/(^|\s)\S/g, (char) => char.toUpperCase());
-};
-
-const normalizeValues = (values, firstValue) => {
-  const normalizedValues = [];
-
-  for (const value of values) {
-    firstValue = firstValue ? firstValue : values[0];
-
-    if (value === null) {
-      normalizedValues.push(null);
-    } else {
-      const normalizedValue = ((value - firstValue) / firstValue) * 100;
-
-      normalizedValues.push(normalizedValue);
-    }
-  }
-
-  return normalizedValues;
-};
+const normalizeValues = (values, firstValue) =>
+  values.map((value) =>
+    value === null ? null : ((value - firstValue) / firstValue) * 100
+  );
 
 export const tea = async ({ DAYS = 30, CURRENCY, RISK }) => {
   const allDates = new Set();
   const result = {};
+  const since = new Date();
+  since.setDate(since.getDate() - DAYS);
 
   const query = {
-    date: {
-      $gte: new Date(new Date().setDate(new Date().getDate() - DAYS)),
-    },
+    date: { $gte: since },
   };
 
-  for (const [source, { model }] of Object.entries(sources)) {
-    /* Get data */
+  for (const [source, { model, FONDO }] of Object.entries(sources)) {
     const data = await model.find(query).sort({ date: 1 }).lean();
 
-    /* Append data to result */
     for (const { idFondo, date, value } of data) {
-      const { currency, risk } = sources[source].FONDO[idFondo];
+      const fondo = FONDO[idFondo];
+      if (!fondo || value === 0) {
+        continue;
+      }
 
+      const { currency, risk } = fondo;
       if (CURRENCY && currency !== CURRENCY) {
         continue;
       }
-
-      if (RISK && risk > RISK) {
+      if (RISK !== undefined && risk > RISK) {
         continue;
       }
 
-      if (value === 0) {
-        continue;
-      }
-
-      const key = idFondo;
-
-      if (!result[source]) {
-        result[source] = {};
-      }
-
-      if (!result[source][key]) {
-        result[source][key] = {};
-      }
+      result[source] ??= {};
+      result[source][idFondo] ??= {};
 
       const dateStr = date.toISOString().slice(0, 10);
       allDates.add(dateStr);
-      result[source][key][dateStr] = value;
+      result[source][idFondo][dateStr] = value;
     }
   }
 
   const sortedDates = Array.from(allDates).sort();
-
   const summary = [];
+
   for (const [source, fondos] of Object.entries(result)) {
     for (const [fondo, dates] of Object.entries(fondos)) {
-      const array = Object.entries(dates).map(([date, value]) => ({
-        date,
-        value,
-      }));
-      const filter = array.filter(({ value }) => value);
-      const sort = filter.sort((a, b) => new Date(a.date) - new Date(b.date));
-      const firstValue = sort.at(0).value;
-      const lastValue = sort.at(-1).value;
+      const series = Object.entries(dates)
+        .filter(([, value]) => value)
+        .sort(([a], [b]) => a.localeCompare(b));
 
-      const dateMap = new Map(sort.map((entry) => [entry.date, entry.value]));
+      if (series.length === 0) {
+        continue;
+      }
+
+      const firstValue = series[0][1];
+      const lastValue = series.at(-1)[1];
+      const dateMap = new Map(series);
       const values = sortedDates.map((date) =>
         dateMap.has(date) ? dateMap.get(date) : null
       );
@@ -109,7 +84,7 @@ export const tea = async ({ DAYS = 30, CURRENCY, RISK }) => {
       summary.push({
         id: name,
         source,
-        values: values,
+        values,
         firstValue,
         lastValue,
         value: +((lastValue / firstValue - 1) * (100 - fee)).toFixed(2),
@@ -119,7 +94,6 @@ export const tea = async ({ DAYS = 30, CURRENCY, RISK }) => {
     }
   }
 
-  const labels = sortedDates;
   const datasets = summary
     .sort((a, b) => a.id.toLowerCase().localeCompare(b.id.toLowerCase()))
     .map(
@@ -127,17 +101,12 @@ export const tea = async ({ DAYS = 30, CURRENCY, RISK }) => {
         { id, source, values, firstValue, lastValue, value, currency, risk },
         index
       ) => {
+        const colors = colorFromKey(`${source}:${id}`);
         return {
           label: capitalize(id.replace(/_/g, " ")),
           data: normalizeValues(values, firstValue),
-          backgroundColor: `rgba(${Math.floor(
-            Math.random() * 255
-          )}, ${Math.floor(Math.random() * 255)}, ${Math.floor(
-            Math.random() * 255
-          )}, 0.2)`,
-          borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(
-            Math.random() * 255
-          )}, ${Math.floor(Math.random() * 255)}, 1)`,
+          backgroundColor: colors.backgroundColor,
+          borderColor: colors.borderColor,
           borderWidth: 1,
           pointRadius: 1,
           hidden: true,
@@ -154,5 +123,5 @@ export const tea = async ({ DAYS = 30, CURRENCY, RISK }) => {
       }
     );
 
-  return { labels, datasets };
+  return { labels: sortedDates, datasets };
 };

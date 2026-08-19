@@ -1,15 +1,9 @@
-# Ingore manual data
+# Manual data
 *.data.mjs
 
-# Nuxt dev/build outputs
-.output
-.nuxt
-.nitro
-.cache
-dist
-
-# Node dependencies
+# Node
 node_modules
+dist
 
 # Logs
 logs

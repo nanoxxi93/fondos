@@ -1,28 +1,14 @@
-# flyctl launch added from .gitignore
-# Ignore manual data
 **/*.data.mjs
-
-# Nuxt dev/build outputs
-**/.output
-**/.nuxt
-**/.nitro
-**/.cache
-**/dist
-
-# Node dependencies
 **/node_modules
-
-# Logs
+**/dist
 **/logs
 **/*.log
-
-# Misc
 **/.DS_Store
 **/.fleet
 **/.idea
-
-# Local env files
 **/.env
 **/.env.*
 !**/.env.example
 **/_*.json
+.git
+README.md
