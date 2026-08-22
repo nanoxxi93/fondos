@@ -1,8 +1,7 @@
 "use strict";
 
-import mongoose, { Schema } from "mongoose";
-
-const TYBA_APIKEY = process.env.TYBA_APIKEY;
+import { createQuotaModel } from "./db.js";
+import { dateRange, fetchJson, isClientError, upsertQuotas } from "./utils.js";
 
 const TYBA_URL = (id) =>
   `https://tyba.io/api-master/robo-advisor/portfolios/${id}/historic-performance`;
@@ -190,15 +189,7 @@ export const TYBA_FONDO = {
   },
 };
 
-const TybaSchema = new Schema({
-  idFondo: { type: String, trim: true },
-  idSerie: { type: String, trim: true },
-  date: { type: Date },
-  value: { type: Number },
-});
-TybaSchema.index({ idFondo: 1, idSerie: 1, date: 1 }, { unique: true });
-
-export const TybaModel = mongoose.model("tyba", TybaSchema);
+export const TybaModel = createQuotaModel("tyba");
 
 const getTybaQuota = async ({
   idFondo,
@@ -209,71 +200,42 @@ const getTybaQuota = async ({
   apikey,
   appproof,
 }) => {
-  const today = new Date();
-  const prevDate = new Date(new Date().setDate(today.getDate() - days));
-
-  if (!fromDate) {
-    fromDate = prevDate.toISOString().slice(0, 10);
-  }
-  if (!toDate) {
-    toDate = today.toISOString().slice(0, 10);
-  }
+  const range = dateRange(days);
+  fromDate ??= range.fromISO;
+  toDate ??= range.toISO;
 
   try {
-    const res = await fetch(TYBA_URL(idFondo), {
+    const json = await fetchJson(TYBA_URL(idFondo), {
       method: "GET",
       headers: {
-        Authorization: apikey || TYBA_APIKEY,
-        "X-App-Proof": appproof,
+        authorization: apikey || process.env.TYBA_APIKEY,
+        "X-App-Proof": appproof || process.env.TYBA_APP_PROOF,
       },
     });
 
-    if (!res.ok) {
-      throw new Error(`${res.status} ${res.statusText}`);
-    }
-
-    const json = await res.json();
-
     console.info(`${idFondo} ${idSerie} ${fromDate} ${toDate} fetch success`);
 
-    await Promise.all(
-      json.graphData?.slice(-days)?.map(
-        async ({ interval, value }) =>
-          await TybaModel.updateOne(
-            {
-              idFondo,
-              idSerie,
-              date: interval,
-            },
-            {
-              $set: {
-                value,
-              },
-            },
-            {
-              upsert: true,
-            }
-          )
-      )
+    await upsertQuotas(
+      TybaModel,
+      json.graphData?.slice(-days)?.map(({ interval, value }) => ({
+        idFondo,
+        idSerie,
+        date: interval,
+        value,
+      }))
     );
 
     console.info(`${idFondo} ${idSerie} ${fromDate} ${toDate} db updated`);
   } catch (error) {
-    if (error.message.startsWith("4")) {
+    if (isClientError(error)) {
       throw error;
     }
     console.error(`${idFondo} ${idSerie} ${fromDate} ${toDate} ${error}`);
-    return undefined;
   }
 };
 
 export const run = async ({ days, apikey, appproof }) => {
-  for (const [idFondo, { currency }] of Object.entries(TYBA_FONDO)) {
-    await getTybaQuota({ idFondo, currency, days, apikey, appproof });
+  for (const [idFondo] of Object.entries(TYBA_FONDO)) {
+    await getTybaQuota({ idFondo, days, apikey, appproof });
   }
-  // await Promise.all(
-  //   Object.entries(TYBA_FONDO).map(async ([idFondo]) => {
-  //     await getTybaQuota({ idFondo, days, apikey });
-  //   })
-  // );
 };

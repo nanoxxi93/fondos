@@ -1,6 +1,7 @@
 "use strict";
 
-import mongoose, { Schema } from "mongoose";
+import { createQuotaModel } from "./db.js";
+import { dateRange, fetchJson, isClientError, upsertQuotas } from "./utils.js";
 
 const ERNI_URL =
   "https://api.inteligogroup.com/investorbackend-prod/valorcuota";
@@ -105,15 +106,7 @@ const ERNI_SERIE = {
   IF_LIBRE_DISPONIBILIDAD_DOLARES: "C",
 };
 
-const ErniSchema = new Schema({
-  idFondo: { type: String, trim: true },
-  idSerie: { type: String, trim: true },
-  date: { type: Date },
-  value: { type: Number },
-});
-ErniSchema.index({ idFondo: 1, idSerie: 1, date: 1 }, { unique: true });
-
-export const ErniModel = mongoose.model("erni", ErniSchema);
+export const ErniModel = createQuotaModel("erni");
 
 const getErniQuota = async ({
   idFondo,
@@ -122,20 +115,15 @@ const getErniQuota = async ({
   dtSerieFin,
   days = 30,
 }) => {
-  const today = new Date();
-  const prevDate = new Date(new Date().setDate(today.getDate() - days));
-
-  if (!dtSerieIni) {
-    dtSerieIni = prevDate.toISOString().slice(0, 10).replaceAll("-", "");
-  }
-  if (!dtSerieFin) {
-    dtSerieFin = today.toISOString().slice(0, 10).replaceAll("-", "");
-  }
+  const range = dateRange(days);
+  dtSerieIni ??= range.fromCompact;
+  dtSerieFin ??= range.toCompact;
 
   try {
-    const res = await fetch(ERNI_URL, {
+    const json = await fetchJson(ERNI_URL, {
       method: "POST",
       headers: {
+        "Content-Type": "application/json",
         "ocp-apim-subscription-key": process.env.ERNI_APIKEY,
       },
       body: JSON.stringify({
@@ -146,73 +134,42 @@ const getErniQuota = async ({
       }),
     });
 
-    if (!res.ok) {
-      throw new Error(`${res.status} ${res.statusText}`);
-    }
-
-    const json = await res.json();
-
     if (json?.code !== "SUCCESS") {
       console.error(json?.errorDetail?.message);
-      return undefined;
+      return;
     }
 
     console.info(
       `${idFondo} ${idSerie} ${dtSerieIni} ${dtSerieFin} fetch success`
     );
 
-    await Promise.all(
-      json.data?.map(
-        async ({ idFondo, idSerie, dtFecha, nuVcuota }) =>
-          await ErniModel.updateOne(
-            {
-              idFondo,
-              idSerie,
-              date: new Date(dtFecha).toISOString().slice(0, 10),
-            },
-            {
-              $set: {
-                value: nuVcuota,
-              },
-            },
-            {
-              upsert: true,
-            }
-          )
-      )
+    await upsertQuotas(
+      ErniModel,
+      json.data?.map(({ idFondo, idSerie, dtFecha, nuVcuota }) => ({
+        idFondo,
+        idSerie,
+        date: new Date(dtFecha).toISOString().slice(0, 10),
+        value: nuVcuota,
+      }))
     );
 
     console.info(
       `${idFondo} ${idSerie} ${dtSerieIni} ${dtSerieFin} db updated`
     );
   } catch (error) {
-    if (error.message.startsWith("4")) {
+    if (isClientError(error)) {
       throw error;
     }
     console.error(`${idFondo} ${idSerie} ${dtSerieIni} ${dtSerieFin} ${error}`);
-    return undefined;
   }
 };
 
 export const run = async ({ days }) => {
-  for (let [idFondo, { name }] of Object.entries(ERNI_FONDO)) {
-    const idSerie = ERNI_SERIE[name];
-    idFondo = idFondo.toString();
+  for (const [idFondo, { name }] of Object.entries(ERNI_FONDO)) {
     await getErniQuota({
       idFondo,
-      idSerie,
+      idSerie: ERNI_SERIE[name],
       days,
     });
   }
-  // await Promise.all(
-  //   Object.entries(ERNI_FONDO).map(async ([idFondo, { name }]) => {
-  //     const idSerie = ERNI_SERIE[name];
-  //     idFondo = idFondo.toString();
-  //     await getErniQuota({
-  //       idFondo,
-  //       idSerie,
-  //       days,
-  //     });
-  //   })
-  // );
 };

@@ -1,11 +1,8 @@
 "use strict";
 
-import mongoose, { Schema } from "mongoose";
-import puppeteer from "puppeteer";
+import { createQuotaModel } from "./db.js";
+import { dateRange, fetchJson, isClientError, upsertQuotas } from "./utils.js";
 
-// https://fondos.bbva.pe/personas/productos/conservadores/bbva-tesoreria-soles.html
-
-const BBVA_APIKEY = process.env.BBVA_APIKEY;
 const BBVA_URL =
   "https://www.bbva.es/ASO/management-entity-funds/v1/management-entities-funds/past-returns";
 
@@ -126,15 +123,45 @@ export const BBVA_FONDO = {
   },
 };
 
-const BbvaSchema = new Schema({
-  idFondo: { type: String, trim: true },
-  idSerie: { type: String, trim: true },
-  date: { type: Date },
-  value: { type: Number },
-});
-BbvaSchema.index({ idFondo: 1, idSerie: 1, date: 1 }, { unique: true });
+export const BbvaModel = createQuotaModel("bbva");
 
-export const BbvaModel = mongoose.model("bbva", BbvaSchema);
+const captureBbvaTsec = async () => {
+  let puppeteer;
+  try {
+    puppeteer = (await import("puppeteer")).default;
+  } catch {
+    throw new Error("BBVA_APIKEY requerido (puppeteer no disponible)");
+  }
+
+  let tsec;
+  const browser = await puppeteer.launch({
+    headless: process.env.BBVA_HEADLESS !== "false",
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+
+  try {
+    const page = await browser.newPage();
+    page.on("response", (response) => {
+      const header = response.headers()["tsec"];
+      if (response.request().resourceType() === "xhr" && header) {
+        tsec = header;
+      }
+    });
+
+    await page.goto(
+      "https://fondos.bbva.pe/personas/productos/conservadores/bbva-tesoreria-soles.html",
+      { waitUntil: "networkidle0", timeout: 30000 }
+    );
+  } finally {
+    await browser.close();
+  }
+
+  if (!tsec) {
+    throw new Error("No se pudo capturar tsec de BBVA");
+  }
+
+  return tsec;
+};
 
 const getBbvaQuota = async ({
   idFondo,
@@ -145,22 +172,16 @@ const getBbvaQuota = async ({
   days = 30,
   apikey,
 }) => {
-  const today = new Date();
-  const prevDate = new Date(new Date().setDate(today.getDate() - days));
-
-  if (!fromDate) {
-    fromDate = prevDate.toISOString().slice(0, 10);
-  }
-  if (!toDate) {
-    toDate = today.toISOString().slice(0, 10);
-  }
+  const range = dateRange(days);
+  fromDate ??= range.fromISO;
+  toDate ??= range.toISO;
 
   try {
-    const res = await fetch(BBVA_URL, {
+    const json = await fetchJson(BBVA_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Tsec: apikey || BBVA_APIKEY,
+        Tsec: apikey || process.env.BBVA_APIKEY,
       },
       body: JSON.stringify({
         funds: [
@@ -179,81 +200,35 @@ const getBbvaQuota = async ({
       }),
     });
 
-    if (!res.ok) {
-      throw new Error(`${res.status} ${res.statusText}`);
-    }
-
-    const json = await res.json();
-
     console.info(`${idFondo} ${idSerie} ${fromDate} ${toDate} fetch success`);
 
-    await Promise.all(
+    await upsertQuotas(
+      BbvaModel,
       json.data?.weightedAverageAssetValues?.map(
-        async ({ valueDate, valueAmount: { amount } }) =>
-          await BbvaModel.updateOne(
-            {
-              idFondo,
-              idSerie,
-              date: valueDate,
-            },
-            {
-              $set: {
-                value: amount,
-              },
-            },
-            {
-              upsert: true,
-            }
-          )
+        ({ valueDate, valueAmount: { amount } }) => ({
+          idFondo,
+          idSerie,
+          date: valueDate,
+          value: amount,
+        })
       )
     );
 
     console.info(`${idFondo} ${idSerie} ${fromDate} ${toDate} db updated`);
   } catch (error) {
-    if (error.message.startsWith("4")) {
+    if (isClientError(error)) {
       throw error;
     }
     console.error(`${idFondo} ${idSerie} ${fromDate} ${toDate} ${error}`);
-    return undefined;
   }
 };
 
 export const run = async ({ days, apikey }) => {
   if (!apikey) {
-    const browser = await puppeteer.launch({
-      headless: false,
-    });
-    const page = await browser.newPage();
-
-    page.on("response", async (response) => {
-      const request = response.request();
-      if (request.resourceType() === "xhr") {
-        const tsec = response.headers()["tsec"];
-        if (tsec) {
-          apikey = tsec;
-        }
-      }
-    });
-
-    await page.goto(
-      "https://fondos.bbva.pe/personas/productos/conservadores/bbva-tesoreria-soles.html",
-      { waitUntil: "networkidle0" }
-    );
-
-    await browser.close();
+    apikey = process.env.BBVA_APIKEY || (await captureBbvaTsec());
   }
 
   for (const [idFondo, { currency }] of Object.entries(BBVA_FONDO)) {
     await getBbvaQuota({ idFondo, currency, days, apikey });
   }
-  // await Promise.all(
-  //   Object.entries(BBVA_FONDO).map(async ([idFondo, { currency }]) => {
-  //     await getBbvaQuota({
-  //       idFondo,
-  //       currency,
-  //       days,
-  //       apikey,
-  //     });
-  //   })
-  // );
 };
