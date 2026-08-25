@@ -31,6 +31,12 @@ export const ERNI_FONDO = {
     risk: 7,
     fee: 3,
   },
+  12: {
+    name: "IF_INVERSION_FLEXIBLE_SOLES",
+    currency: "PEN",
+    risk: 2,
+    fee: 1,
+  },
   16: {
     name: "IF_OPORTUNIDAD_SOLES",
     currency: "PEN",
@@ -73,17 +79,41 @@ export const ERNI_FONDO = {
     risk: 7,
     fee: 1,
   },
+  49: {
+    name: "IF_FUTURO_SEGURO_SOLES",
+    currency: "PEN",
+    risk: 2,
+    fee: 1.25,
+  },
   50: {
     name: "IF_ENFOQUE_LATAM_DOLARES",
     currency: "USD",
     risk: 7,
     fee: 1.2,
   },
+  51: {
+    name: "IF_INVERSION_INDIA_DOLARES",
+    currency: "USD",
+    risk: 3,
+    fee: 1,
+  },
+  52: {
+    name: "IF_ENFOQUE_MERCADOS_FRONTERAS_DOLARES",
+    currency: "USD",
+    risk: 3,
+    fee: 1,
+  },
   55: {
     name: "IF_PORTAFOLIO_DINAMICO_DOLARES",
     currency: "USD",
     risk: 4,
     fee: 1.5,
+  },
+  56: {
+    name: "IF_PORTAFOLIO_DINAMICO_SOLES",
+    currency: "PEN",
+    risk: 1,
+    fee: 0.7,
   },
   64: {
     name: "IF_FUTURO_SEGURO_DOLARES",
