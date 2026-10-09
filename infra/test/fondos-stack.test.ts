@@ -9,7 +9,7 @@ describe('FondosStack - Infraestructura Base', () => {
   let stack: FondosStack;
   let template: Template;
 
-  beforeEach(() => {
+  beforeAll(() => {
     app = new cdk.App();
     stack = new FondosStack(app, 'TestFondosStack', {
       stage: 'prod',
@@ -97,11 +97,41 @@ describe('FondosStack - Infraestructura Base', () => {
     });
   });
 
-  test('Debe verificar exactamente 3 funciones Lambda en el stack (Erni, Bbva y Tyba)', () => {
-    template.resourceCountIs('AWS::Lambda::Function', 3);
+  test('Debe aprovisionar la funcion Lambda ApiFunction con 256MB y timeout de 15s', () => {
+    template.hasResourceProperties('AWS::Lambda::Function', {
+      Runtime: 'nodejs24.x',
+      MemorySize: 256,
+      Timeout: 15,
+      Description: 'API Serverless y motor de analitica TEA de fondos mutuos',
+    });
   });
 
-  test('Debe verificar exactamente 2 reglas de EventBridge Scheduler (solo ERNI y BBVA, ninguna para Tyba)', () => {
+  test('Debe crear la AWS Lambda Function URL publica con CORS para ApiFunction', () => {
+    template.resourceCountIs('AWS::Lambda::Url', 1);
+
+    template.hasResourceProperties('AWS::Lambda::Url', {
+      AuthType: 'NONE',
+      Cors: {
+        AllowOrigins: ['*'],
+        AllowMethods: ['GET'],
+        AllowHeaders: ['content-type', 'authorization'],
+        MaxAge: 86400,
+      },
+    });
+
+    // Permiso público de invocación Function URL
+    template.hasResourceProperties('AWS::Lambda::Permission', {
+      Action: 'lambda:InvokeFunctionUrl',
+      Principal: '*',
+      FunctionUrlAuthType: 'NONE',
+    });
+  });
+
+  test('Debe verificar exactamente 4 funciones Lambda en el stack (Erni, Bbva, Tyba y Api)', () => {
+    template.resourceCountIs('AWS::Lambda::Function', 4);
+  });
+
+  test('Debe verificar exactamente 2 reglas de EventBridge Scheduler (solo ERNI y BBVA, ninguna para Tyba ni Api)', () => {
     template.resourceCountIs('AWS::Events::Rule', 2);
   });
 });

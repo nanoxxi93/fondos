@@ -13,7 +13,12 @@
     "test:watch": "vitest",
     "scrape:bbva": "tsx src/scrapers/bbva/run-local.ts",
     "scrape:erni": "tsx src/scrapers/erni/run-local.ts",
-    "scrape:tyba": "tsx src/scrapers/tyba/run-local.ts"
+    "scrape:tyba": "tsx src/scrapers/tyba/run-local.ts",
+    "api:local": "tsx src/api/run-local.ts",
+    "server": "tsx src/server.ts",
+    "server:dev": "tsx watch src/server.ts",
+    "build:server": "tsc -p tsconfig.json",
+    "start:server": "node dist/src/server.js"
   },
   "keywords": [
     "fondos",
@@ -38,6 +43,7 @@
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@types/aws-lambda": "^8.10.164",
+    "@types/express": "^5.0.6",
     "@types/node": "^26.6.4",
     "esbuild": "^0.28.2",
     "eslint": "^9.21.0",

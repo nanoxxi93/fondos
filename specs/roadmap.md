@@ -1,7 +1,7 @@
 # Hoja de ruta (Roadmap)
 
 > **Versión publicada:** v1.0.0 (Legacy en Fly.io)
-> **Estado actual:** Fase 2.3 Completada (Ingesta Serverless de Tyba)
+> **Estado actual:** Fase 3 Completada (API Serverless y Motor de Analítica)
  
 ## Fase 0: Validación Técnica y Bases SDD (Completada)
 - [x] Establecer gobernanza Spec-Driven Development (SDD) importando plantilla de `sdd-template`.
@@ -25,10 +25,11 @@
 - [x] Configurar reglas de EventBridge Scheduler para disparo diario de ERNI (23:00 UTC) y BBVA (23:15 UTC) post-cierre de mercado.
 - [x] Implementar manejo singleton y reutilización de conexión a MongoDB Atlas en `src/shared/db.ts`.
 
-## Fase 3: API Serverless y Motor de Analítica
-- [ ] Migrar motor de cálculo de variación neta (`tea.js`) a TypeScript puro en `src/domain/tea.ts` con cobertura de tests TDD.
-- [ ] Crear Lambda Handler para la API de consulta y enlazarla con una **AWS Lambda Function URL** (HTTPS con cabeceras CORS).
-- [ ] Implementar caché de cabeceras HTTP (`Cache-Control`) para optimizar llamadas repetitivas.
+## Fase 3: API Serverless y Motor de Analítica (Completada)
+- [x] **Fase 3:** [API Serverless y Motor de Analítica](2026-10-09-api-serverless-analitica/) — Migrar motor de cálculo de variación neta (`tea.js`) a TypeScript puro en `src/domain/tea.ts` con cobertura 100% TDD.
+- [x] Crear Lambda Handler para la API de consulta en `src/api/handler.ts` y enlazarla con una **AWS Lambda Function URL** pública (HTTPS nativo con cabeceras CORS).
+- [x] Implementar caché de cabeceras HTTP asimétrico (`Cache-Control: public, max-age=3600...` en éxito y `no-store` en errores).
+- [x] Implementar servidor de desarrollo local interactivo en `src/api/run-local.ts` accesible vía `npm run api:local`.
 
 ## Fase 4: Frontend Estático (React + Vite) y Despliegue en GitHub Pages
 - [ ] Construir el dashboard de visualización con React + Vite + TypeScript y Chart.js como SPA estática en `frontend/` (o `public/`).

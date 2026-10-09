@@ -83,16 +83,18 @@ fondos/
 │   ├── bin/                # Entrypoint de la app CDK
 │   ├── lib/                # Stacks y Constructs (FondosStack, FondosFunction)
 │   └── test/               # Tests de infraestructura (cdk assertions)
-├── src/                    # Código de las funciones Lambda (TypeScript)
-│   ├── scrapers/           # Handlers de BBVA, ERNI y Tyba
-│   ├── api/                # Handler de la Lambda Function URL (cálculo TEA)
-│   ├── domain/             # Entidades de cuotas, fondos y lógica matemática pura
-│   └── shared/             # Conexión singleton a MongoDB Atlas y utilidades
-├── frontend/               # Dashboard SPA (React + Vite + TypeScript) para GitHub Pages
-├── legacy/                 # [LEGACY] Monolito Express, Dockerfile y scrapers para Fly.io
+├── src/                    # Código modular en TypeScript (Serverless & Express)
+│   ├── scrapers/           # Handlers e integración bancaria de BBVA, ERNI y Tyba
+│   ├── api/                # Handler de la Lambda Function URL (cálculo TEA & health)
+│   ├── domain/             # Motor matemático puro de variación relativa neta (TEA)
+│   ├── views/              # Renderizador HTML SSR para el dashboard sin frameworks
+│   ├── shared/             # Conexión singleton a MongoDB Atlas, config y utilidades
+│   └── server.ts           # Servidor Express unificado para Fly.io y ejecución local
+├── legacy/                 # [LEGACY] Código histórico en JavaScript puro (preservado)
+├── Dockerfile              # Dockerfile multi-stage ligero en la raíz para Fly.io
+├── fly.toml                # Configuración de despliegue en Fly.io
 ├── specs/                  # Documentación y ciclo SDD
-├── scripts/                # Scripts de validación SDD y gobernanza
-└── fly.toml                # Configuración Fly.io apuntando a legacy/Dockerfile
+└── scripts/                # Scripts de validación SDD y gobernanza
 
 ```
 

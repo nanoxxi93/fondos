@@ -7,7 +7,7 @@ app = 'fondos-purple-fog-9801'
 primary_region = 'gru'
 
 [build]
-  dockerfile = "legacy/Dockerfile"
+  dockerfile = "Dockerfile"
 
 [env]
   NODE_ENV = "production"

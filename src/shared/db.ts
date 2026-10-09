@@ -52,3 +52,8 @@ export async function disconnectDatabase(): Promise<void> {
 export function isDatabaseConnected(): boolean {
   return mongoose.connection.readyState === 1;
 }
+
+/**
+ * Alias de compatibilidad para comprobación de estado de conexión a MongoDB.
+ */
+export const isMongoReady = isDatabaseConnected;

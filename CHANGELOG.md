@@ -11,6 +11,28 @@ Categorías: **Añadido** (algo nuevo) · **Cambiado** (algo existente se compor
 ### 2026-10-09
 
 #### Añadido
+- Servidor Express unificado y vista Server-Side Rendering (SSR) en TypeScript (`src/server.ts`, `src/views/html.ts`):
+  - Punto de entrada Express modular y ligero para despliegue en Fly.io o ejecución local sin dependencias de frameworks frontend (cero React, cero Vite) preservando la interactividad del dashboard clásico.
+  - Endpoint `GET /` que sirve el HTML interactivo completo con formulario de filtros (`days`, `currency`, `risk`), checkboxes dinámicos agrupados por administradora, canvas Chart.js y tabla comparativa de rendimientos.
+  - Endpoint `GET /api/tea` que expone los datos analíticos normalizados en formato JSON con cabecera de caché (`Cache-Control: public, max-age=3600...`).
+  - Endpoints de ingesta protegidos por `SCRAPE_TOKEN`: `GET /api/erni`, `GET /api/bbva` y `GET /api/tyba`, invocando directamente los handlers serverless de `src/scrapers/` con `fetch` nativo.
+  - Endpoint `GET /health` compatible con las verificaciones automáticas de Fly.io y monitoreo de MongoDB Atlas.
+  - `Dockerfile` multi-stage ligero en la raíz y actualización de `fly.toml` para compilación y ejecución de Node 24 con consumo mínimo de memoria (<40 MB).
+  - 26 nuevas pruebas unitarias en `test/server.test.ts`, `test/views/html.test.ts` y `test/shared/utils.test.ts` (122 pruebas pasando al 100%).
+- Implementación completa de la Fase 3 (API Serverless y Motor de Analítica TEA):
+  - Especificación SDD completa en [`specs/2026-10-09-api-serverless-analitica/`](specs/2026-10-09-api-serverless-analitica/) (`spec.md`, `plan.md`, `tasks.md`, `checklist.md`).
+  - Motor analítico TEA puro en `src/domain/tea.ts`: migración completa de la lógica legacy a TypeScript funcional, cálculo de rendimiento relativo porcentual ponderado, ordenamiento alfabético determinístico de datasets y enriquecimiento de metadatos (`idFondo`, `fee`).
+  - Validación de contratos HTTP y parámetros con TypeBox en `src/api/types.ts` (`days`, `since`, `currency`, `provider`).
+  - API Serverless en `src/api/handler.ts` compatible con AWS Lambda Function URL (formato payload v2), enrutador para `GET /`, `GET /api/tea`, `GET /health` y preflight `OPTIONS` (HTTP 204), y política de caché asimétrica (`Cache-Control: public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400` para 200 OK y `no-store, no-cache, must-revalidate` para 4xx/5xx).
+  - Función Lambda `ApiFunction` (256 MB, 15s timeout, Node.js 24) y Function URL pública con CORS (`AuthType.NONE`) aprovisionadas en AWS CDK en `infra/lib/fondos-stack.ts` con CloudFormation Output `ApiFunctionUrlOutput`.
+  - Servidor de desarrollo local en `src/api/run-local.ts` accesible vía `npm run api:local` simulando eventos Lambda Function URL v2 sobre `node:http`.
+  - Suite de pruebas unitarias exhaustivas con Vitest (25 pruebas nuevas, 96/96 pruebas totales en la raíz) en `test/api/types.test.ts`, `test/domain/tea.test.ts` y `test/api/handler.test.ts`.
+  - Pruebas sintéticas en `infra/test/fondos-stack.test.ts` con `@aws-cdk/assertions` verificando `ApiFunction`, `AWS::Lambda::Url` y optimización de compilación con `beforeAll` (13/13 pruebas Jest pasando).
+- Plan de pruebas de control de calidad y matriz de aceptación de la Fase 3 en [`specs/2026-10-09-api-serverless-analitica/checklist.md`](specs/2026-10-09-api-serverless-analitica/checklist.md) con 18 criterios de aceptación y 11 pruebas de casos extremos.
+- Plan de tareas de implementación de la Fase 3 en [`specs/2026-10-09-api-serverless-analitica/tasks.md`](specs/2026-10-09-api-serverless-analitica/tasks.md) estructurado en 5 fases lógicas de desarrollo y verificación.
+- Plan de implementación técnico de la Fase 3 en [`specs/2026-10-09-api-serverless-analitica/plan.md`](specs/2026-10-09-api-serverless-analitica/plan.md) definiendo la arquitectura modular de la API Serverless, contratos TypeBox, motor analítico TEA puro, caché asimétrico y aprovisionamiento de AWS Lambda Function URL con CORS.
+- Refinamiento de la especificación SDD de la Fase 3 ([`specs/2026-10-09-api-serverless-analitica/spec.md`](specs/2026-10-09-api-serverless-analitica/spec.md)) tras la fase `clarify`, incorporando cálculo determinístico de `since` a medianoche UTC, anti-caché estricto en respuestas de error (4xx/5xx), enriquecimiento de `meta` con `idFondo` y `fee`, y servidor local en `src/api/run-local.ts`.
+- Especificación SDD de la Fase 3 en [`specs/2026-10-09-api-serverless-analitica/spec.md`](specs/2026-10-09-api-serverless-analitica/spec.md) para la API Serverless con AWS Lambda Function URL, motor de cálculo de variación neta (`tea`) y caché HTTP.
 - Implementación completa de la Fase 2.3 (Ingesta Serverless de Tyba / Credicorp Capital):
   - Especificación SDD completa en [`specs/2026-10-09-ingesta-tyba/`](specs/2026-10-09-ingesta-tyba/) (`spec.md`, `plan.md`, `tasks.md`, `checklist.md`).
   - Scraper modular en `src/scrapers/tyba/`: catálogo canónico de 30 fondos de Credicorp Capital en `catalog.ts`, contratos TypeBox en `types.ts`, normalización canónica en `parser.ts` (con saneamiento de `Bearer `, soporte `xAppProof` / `x-app-proof` y recorte de días fiel al legacy `slice(-days)` o persistencia total `all: true`), cliente HTTP con `fetch` nativo en `client.ts` y Lambda handler serverless en `handler.ts`.

@@ -129,36 +129,41 @@ npm run scrape:bbva
 npm run scrape:tyba -- --authorization "<token_jwt>" [--refresh-token "<token>"] [--days 30] [--dry-run]
 ```
 
-### Uso Local del Servidor Monolítico
+### Servidor Express Unificado (Fly.io / Local)
+El proyecto cuenta con un servidor Express en TypeScript (`src/server.ts`) que unifica la vista SSR del dashboard y todos los endpoints de ingesta y analítica, consumiendo directamente la lógica de dominio sin sobrecargar Fly.io con frameworks frontend pesados:
+
 ```bash
-npm install
-npm start
+# Ejecución en desarrollo
+npm run server
+
+# Desarrollo con auto-recarga
+npm run server:dev
+
+# Compilar para producción
+npm run build:server
+
+# Iniciar servidor compilado
+npm run start:server
 ```
 
-Desarrollo con recarga:
-```bash
-npm run dev
-```
+Dashboard interactivo: [http://localhost:3000](http://localhost:3000)
 
-Dashboard: [http://localhost:3000](http://localhost:3000)
-
-### Endpoints Legados
+### Endpoints del Servidor Express
 | Método | Ruta | Descripción |
 | --- | --- | --- |
-| `GET` | `/` | Dashboard. Query: `days` (1-3650, default 30), `currency` (`PEN` o `USD`), `risk` (máximo 1-7) |
-| `GET` | `/health` | `OK` si Mongo está conectado; `503` si no |
-| `GET` | `/api/erni` | Descarga cuotas ERNI. Query: `days` |
-| `GET` | `/api/bbva` | Descarga cuotas BBVA. Query: `days`, `apikey` (tsec opcional) |
-| `GET` | `/api/tyba` | Descarga cuotas Tyba. Query: `days`, `apikey` y `appproof` opcionales |
+| `GET` | `/` | Dashboard SSR interactivo con Chart.js, filtros y tabla. Query: `days` (1-3650, default 30), `currency` (`PEN` o `USD`), `risk` (máximo 1-7) |
+| `GET` | `/api/tea` | Datos analíticos normalizados en formato JSON (`{ labels, datasets }`) con cabecera de caché |
+| `GET` | `/health` | Health check (`200 OK` si Mongo está conectado; `503` si no) |
+| `GET` | `/api/erni` | Dispara ingesta de ERNI (Inteligo). Requiere `SCRAPE_TOKEN`. Query: `days` |
+| `GET` | `/api/bbva` | Dispara ingesta de BBVA vía API nativa. Requiere `SCRAPE_TOKEN`. Query: `days` |
+| `GET` | `/api/tyba` | Dispara ingesta de Tyba. Requiere `SCRAPE_TOKEN` y cabeceras de sesión (`authorization`, `x-app-proof` opcional) |
 
-### Docker Legado
+### Despliegue en Fly.io
+El despliegue en Fly.io utiliza un `Dockerfile` multi-stage ultraligero que compila el código TypeScript a JavaScript nativo y corre sobre Node 24 Alpine consumiendo menos de 40 MB de memoria:
+
 ```bash
-./run.sh
+fly deploy
 ```
-Compose publica `5001 -> 3000` y lee `.env.development`.
-
-### Deploy Legado (Fly.io)
-Push a `main` dispara `.github/workflows/fly-deploy.yml`.
 
 ---
 
@@ -167,10 +172,14 @@ Push a `main` dispara `.github/workflows/fly-deploy.yml`.
 | Directorio / Archivo | Rol |
 | --- | --- |
 | `specs/` | Documentos fundacionales y especificaciones SDD por funcionalidad |
-| `.claude/skills/` | Habilidades del ciclo SDD (`specify`, `plan`, `tasks`, `implement`...) |
+| `infra/` | Infraestructura como Código con AWS CDK v2 en TypeScript (`FondosStack`, Lambdas, EventBridge, Function URLs) |
+| `src/scrapers/` | Módulos de ingesta y adaptadores bancarios serverless (ERNI, BBVA, Tyba) con `fetch` nativo |
+| `src/domain/` | Motor matemático puro de variación relativa neta de comisiones (`tea.ts`) |
+| `src/api/` | Handler de la AWS Lambda Function URL (`handler.ts`), esquemas TypeBox y servidor local |
+| `src/views/` | Plantilla HTML para Server-Side Rendering (SSR) del dashboard sin dependencias de cliente |
+| `src/server.ts` | Servidor Express unificado para despliegue en Fly.io y ejecución local |
+| `src/shared/` | Conexión singleton a MongoDB Atlas, lectura de parámetros SSM y utilidades de concurrencia |
+| `legacy/` | Código monolítico histórico en JavaScript puro (preservado para compatibilidad) |
+| `Dockerfile` | Imagen Docker multi-stage optimizada para Fly.io |
+| `fly.toml` | Archivo de configuración de la aplicación en Fly.io |
 | `scripts/` | Validadores de especificaciones (`validate_sdd.py`, `check_constitution.py`) |
-| `infra/` | *(En desarrollo)* Infraestructura como Código con AWS CDK (TypeScript) |
-| `src/` | *(En desarrollo)* Handlers TypeScript para AWS Lambdas y lógica de dominio |
-| `public/` | *(En desarrollo)* Dashboard estático para GitHub Pages |
-| `index.js`, `db.js`, `tea.js`, `html.js` | [Legado] Servidor Express, Mongoose y vistas monolíticas |
-| `erni.js`, `bbva.js`, `tyba.js` | [Legado] Scrapers y catálogos de fondos |

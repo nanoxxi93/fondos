@@ -1,8 +1,9 @@
 import * as cdk from 'aws-cdk-lib';
-import { Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import { CfnOutput, Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as path from 'path';
 import { Construct } from 'constructs';
 import { FondosFunction } from './constructs/fondos-function';
@@ -19,6 +20,8 @@ export class FondosStack extends Stack {
   public readonly bbvaScraperFunction: FondosFunction;
   public readonly bbvaScraperScheduleRule: events.Rule;
   public readonly tybaScraperFunction: FondosFunction;
+  public readonly apiFunction: FondosFunction;
+  public readonly apiFunctionUrl: lambda.FunctionUrl;
 
   constructor(scope: Construct, id: string, props?: FondosStackProps) {
     super(scope, id, props);
@@ -96,6 +99,32 @@ export class FondosStack extends Stack {
       memorySize: 256,
       ssmPrefix: this.ssmPrefix,
       description: 'Scraper serverless bajo demanda de fondos mutuos Tyba (Credicorp Capital)',
+    });
+
+    // --- API Serverless y Motor de Analítica (TEA) ---
+    this.apiFunction = new FondosFunction(this, 'ApiFunction', {
+      entry: path.join(__dirname, '../../src/api/handler.ts'),
+      handler: 'handler',
+      timeout: Duration.seconds(15),
+      memorySize: 256,
+      ssmPrefix: this.ssmPrefix,
+      description: 'API Serverless y motor de analitica TEA de fondos mutuos',
+    });
+
+    this.apiFunctionUrl = this.apiFunction.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+      cors: {
+        allowedOrigins: ['*'],
+        allowedMethods: [lambda.HttpMethod.GET],
+        allowedHeaders: ['content-type', 'authorization'],
+        maxAge: Duration.days(1),
+      },
+    });
+
+    new CfnOutput(this, 'ApiFunctionUrlOutput', {
+      value: this.apiFunctionUrl.url,
+      description: 'URL publica HTTPS de la API Serverless de analitica TEA',
+      exportName: `fondos-api-url-${stage}`,
     });
   }
 }
