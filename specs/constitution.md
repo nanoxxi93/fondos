@@ -29,6 +29,8 @@ Este archivo captura los principios, restricciones y estándares no negociables 
 
 - **Fetch Nativo:**
   Se prohíbe el uso de librerías HTTP pesadas como `axios`. Se debe usar la API nativa de `fetch` de Node.js.
+- **Validación de Esquemas con Sinclair TypeBox:**
+  El proyecto utiliza `@sinclair/typebox` como la librería estándar para la definición y validación de esquemas (payloads de eventos, respuestas HTTP de entidades bancarias y contratos de API) en funciones Lambda, minimizando la sobrecarga de empaquetado y optimizando los arranques en frío (*cold start*).
 - **Serverless Database Best Practice (Mongo Pool):**
   Toda Lambda que conecte a MongoDB Atlas debe mantener y cachear la conexión de Mongoose en el ámbito global del contenedor (fuera del `handler`) para reutilizar conexiones entre invocaciones calientes y evitar la saturación de sockets.
 - **Test-Driven Development (TDD):**

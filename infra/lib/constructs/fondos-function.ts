@@ -4,6 +4,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as path from 'path';
 import { Construct } from 'constructs';
 
 export interface FondosFunctionProps extends NodejsFunctionProps {
@@ -24,6 +25,9 @@ export class FondosFunction extends NodejsFunction {
 
   constructor(scope: Construct, id: string, props: FondosFunctionProps) {
     const ssmPrefix = props.ssmPrefix || '/fondos/prod';
+    const repoRoot = path.resolve(__dirname, '../../../');
+    const projectRoot = props.projectRoot || repoRoot;
+    const depsLockFilePath = props.depsLockFilePath || path.join(repoRoot, 'package-lock.json');
 
     const logGroup = props.logGroup || new logs.LogGroup(scope, `${id}LogGroup`, {
       retention: logs.RetentionDays.ONE_WEEK,
@@ -31,6 +35,8 @@ export class FondosFunction extends NodejsFunction {
     });
 
     super(scope, id, {
+      projectRoot,
+      depsLockFilePath,
       runtime: lambda.Runtime.NODEJS_24_X,
       memorySize: props.memorySize || 256,
       timeout: props.timeout || Duration.seconds(30),

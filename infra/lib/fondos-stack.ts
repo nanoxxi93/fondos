@@ -1,7 +1,11 @@
 import * as cdk from 'aws-cdk-lib';
-import { RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import { Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as targets from 'aws-cdk-lib/aws-events-targets';
+import * as path from 'path';
 import { Construct } from 'constructs';
+import { FondosFunction } from './constructs/fondos-function';
 
 export interface FondosStackProps extends StackProps {
   stage?: string;
@@ -10,6 +14,8 @@ export interface FondosStackProps extends StackProps {
 export class FondosStack extends Stack {
   public readonly ssmParameters: Record<string, ssm.StringParameter>;
   public readonly ssmPrefix: string;
+  public readonly erniScraperFunction: FondosFunction;
+  public readonly erniScraperScheduleRule: events.Rule;
 
   constructor(scope: Construct, id: string, props?: FondosStackProps) {
     super(scope, id, props);
@@ -37,5 +43,25 @@ export class FondosStack extends Stack {
 
       this.ssmParameters[config.name].applyRemovalPolicy(RemovalPolicy.RETAIN);
     }
+
+    // --- Scraper Serverless de ERNI (Inteligo) ---
+    this.erniScraperFunction = new FondosFunction(this, 'ErniScraperFunction', {
+      entry: path.join(__dirname, '../../src/scrapers/erni/handler.ts'),
+      handler: 'handler',
+      timeout: Duration.seconds(60),
+      memorySize: 256,
+      ssmPrefix: this.ssmPrefix,
+      description: 'Scraper serverless diario de fondos mutuos ERNI (Inteligo)',
+    });
+
+    // Regla de EventBridge Scheduler para disparo diario a las 23:00 UTC (18:00 hora de Lima)
+    this.erniScraperScheduleRule = new events.Rule(this, 'ErniScraperScheduleRule', {
+      schedule: events.Schedule.cron({ minute: '0', hour: '23' }),
+      description: 'Disparo diario del scraper de ERNI post-cierre de mercado (18:00 PET / 23:00 UTC)',
+    });
+
+    this.erniScraperScheduleRule.addTarget(
+      new targets.LambdaFunction(this.erniScraperFunction)
+    );
   }
 }

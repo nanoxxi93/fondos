@@ -53,6 +53,23 @@ describe('FondosStack - Infraestructura Base', () => {
 
     expect(ssmCount).toBe(5);
   });
+
+  test('Debe aprovisionar la funcion Lambda ErniScraperFunction con 256MB y timeout de 60s', () => {
+    template.hasResourceProperties('AWS::Lambda::Function', {
+      Runtime: 'nodejs24.x',
+      MemorySize: 256,
+      Timeout: 60,
+      Description: 'Scraper serverless diario de fondos mutuos ERNI (Inteligo)',
+    });
+  });
+
+  test('Debe configurar la regla de EventBridge Scheduler para disparo diario a las 23:00 UTC', () => {
+    template.hasResourceProperties('AWS::Events::Rule', {
+      ScheduleExpression: 'cron(0 23 * * ? *)',
+      Description: 'Disparo diario del scraper de ERNI post-cierre de mercado (18:00 PET / 23:00 UTC)',
+      State: 'ENABLED',
+    });
+  });
 });
 
 describe('FondosFunction Construct', () => {

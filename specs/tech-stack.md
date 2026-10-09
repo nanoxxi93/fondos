@@ -71,6 +71,7 @@ Al haber caducado los 12 meses de prueba estándar de AWS:
 | **Frontend** | **React + Vite (TypeScript) + Chart.js** | Arquitectura SPA moderna por componentes, bundling ultrarrápido con Vite y hospedaje gratuito de por vida en GitHub Pages. |
 
 | **Testing** | **Vitest / Jest** | Ejecución rápida de tests unitarios tanto para la lógica de cálculo de rentabilidad como para los constructs de CDK. |
+| **Validación de Esquemas** | **@sinclair/typebox** | Validación tipada de esquemas JSON ultra ligera y de alto rendimiento para Lambdas, adoptada como el estándar del proyecto por su compatibilidad nativa con JSON Schema y optimización en serverless. |
 
 ---
 

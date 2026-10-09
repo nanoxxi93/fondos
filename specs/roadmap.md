@@ -1,7 +1,7 @@
 # Hoja de ruta (Roadmap)
 
 > **Versión publicada:** v1.0.0 (Legacy en Fly.io)
-> **Estado actual:** Fase 1 Completada (Infraestructura Base CDK)
+> **Estado actual:** Fase 2.1 Completada (Ingesta Serverless de ERNI)
  
 ## Fase 0: Validación Técnica y Bases SDD (Completada)
 - [x] Establecer gobernanza Spec-Driven Development (SDD) importando plantilla de `sdd-template`.
@@ -18,12 +18,12 @@
 - [x] Implementar tests unitarios de infraestructura con `@aws-cdk/assertions` (`npm test`) y síntesis de CloudFormation (`npm run synth`).
 
 
-## Fase 2: Ingesta Serverless Desacoplada (Scrapers en Lambdas)
-- [ ] Migrar catálogo y scraper de ERNI (Inteligo) a TypeScript con tipado estricto y handler de Lambda.
-- [ ] Migrar catálogo y scraper de BBVA a TypeScript y handler de Lambda.
-- [ ] Migrar catálogo y scraper de Tyba a TypeScript y handler de Lambda.
-- [ ] Configurar reglas de EventBridge Scheduler para disparo diario sincronizado post-cierre de mercado.
-- [ ] Implementar manejo singleton y reutilización de conexión a MongoDB Atlas en `src/shared/db.ts`.
+## Fase 2: Ingesta Serverless Desacoplada (Scrapers en Lambdas por Fuente)
+- [x] **Fase 2.1 (ERNI / Inteligo):** [Ingesta Serverless de ERNI](2026-10-08-ingesta-erni/) — Descubrimiento dinámico de fondos activos, extracción de series temporales de valores cuota vía API v2 y sincronización en MongoDB Atlas.
+- [ ] **Fase 2.2 (BBVA):** Migrar catálogo y scraper de BBVA a TypeScript y handler de Lambda.
+- [ ] **Fase 2.3 (Tyba):** Migrar catálogo y scraper de Tyba a TypeScript y handler de Lambda.
+- [x] Configurar regla de EventBridge Scheduler para disparo diario de ERNI a las 23:00 UTC post-cierre de mercado.
+- [x] Implementar manejo singleton y reutilización de conexión a MongoDB Atlas en `src/shared/db.ts`.
 
 ## Fase 3: API Serverless y Motor de Analítica
 - [ ] Migrar motor de cálculo de variación neta (`tea.js`) a TypeScript puro en `src/domain/tea.ts` con cobertura de tests TDD.
@@ -42,7 +42,7 @@
 ## Tareas Sueltas
 
 ### En curso
-- Ninguna (Fase 1 completada, lista para iniciar Fase 2).
+- Ninguna. Próximo paso: Fase 2.2 (Scraper Serverless de BBVA).
 
 
 ### En main, sin versión todavía
