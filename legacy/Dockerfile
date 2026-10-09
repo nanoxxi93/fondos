@@ -14,4 +14,4 @@ USER node
 
 EXPOSE 3000
 
-CMD ["node", "--max-old-space-size=180", "index.js"]
+CMD ["node", "--max-old-space-size=180", "legacy/index.js"]

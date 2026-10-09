@@ -1,0 +1,32 @@
+{
+  "name": "fondos-infra",
+  "version": "1.0.0",
+  "description": "Infraestructura como Codigo para Fondos Mutuos Peru con AWS CDK v2",
+  "private": true,
+  "bin": {
+    "fondos-infra": "bin/fondos.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.178.1",
+    "constructs": "^10.4.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.13.1",
+    "aws-cdk": "^2.1145.0",
+    "esbuild": "^0.25.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}

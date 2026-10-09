@@ -63,11 +63,13 @@ Al haber caducado los 12 meses de prueba estándar de AWS:
 | Área | Elección | Justificación |
 |---|---|---|
 | **Infraestructura como Código (IaC)** | **AWS CDK v2 (TypeScript)** | Permite infraestructura tipada, reutilizable y declarada en el mismo lenguaje del runtime de las Lambdas. |
-| **Runtime de Cómputo** | **Node.js 22.x (TypeScript)** | Moderno, ultrarrápido tiempo de arranque (Cold Start reducido) y soporte nativo de ESM y `fetch`. |
+| **Runtime de Cómputo** | **Node.js 24.x (TypeScript)** | Versión moderna con soporte nativo de ESM, `fetch`, y paridad exacta entre el entorno local y AWS Lambda (`nodejs24.x`). |
+
 | **Base de Datos** | **MongoDB Atlas M0 (Mongoose)** | Compatibilidad comprobada con el volumen de cuotas, consultas analíticas por rango de fechas sin cobro de RCU. |
 | **Orquestación de Cron** | **Amazon EventBridge Scheduler** | Alta precisión horaria, reintentos automáticos y 14 millones de invocaciones gratuitas al mes. |
 | **Gestión de Configuración y Secretos** | **AWS SSM Parameter Store (Standard)** | Almacenamiento cifrado y llamadas a la API a costo \$0. |
-| **Frontend** | **Vanilla JS + Chart.js (HTML5 Canvas)** | Ultraligero, sin dependencias pesadas de build, alta compatibilidad y hospedaje gratis en GitHub Pages. |
+| **Frontend** | **React + Vite (TypeScript) + Chart.js** | Arquitectura SPA moderna por componentes, bundling ultrarrápido con Vite y hospedaje gratuito de por vida en GitHub Pages. |
+
 | **Testing** | **Vitest / Jest** | Ejecución rápida de tests unitarios tanto para la lógica de cálculo de rentabilidad como para los constructs de CDK. |
 
 ---
@@ -78,18 +80,19 @@ Al haber caducado los 12 meses de prueba estándar de AWS:
 fondos/
 ├── infra/                  # Infraestructura como Código (AWS CDK)
 │   ├── bin/                # Entrypoint de la app CDK
-│   ├── lib/                # Stacks (FondosDatabaseStack, FondosScraperStack, FondosApiStack)
+│   ├── lib/                # Stacks y Constructs (FondosStack, FondosFunction)
 │   └── test/               # Tests de infraestructura (cdk assertions)
 ├── src/                    # Código de las funciones Lambda (TypeScript)
 │   ├── scrapers/           # Handlers de BBVA, ERNI y Tyba
 │   ├── api/                # Handler de la Lambda Function URL (cálculo TEA)
 │   ├── domain/             # Entidades de cuotas, fondos y lógica matemática pura
 │   └── shared/             # Conexión singleton a MongoDB Atlas y utilidades
-├── public/                 # Dashboard estático para GitHub Pages (Chart.js)
+├── frontend/               # Dashboard SPA (React + Vite + TypeScript) para GitHub Pages
+├── legacy/                 # [LEGACY] Monolito Express, Dockerfile y scrapers para Fly.io
 ├── specs/                  # Documentación y ciclo SDD
 ├── scripts/                # Scripts de validación SDD y gobernanza
-├── index.js                # [LEGACY] Servidor Express para Fly.io
-└── fly.toml                # [LEGACY] Configuración Fly.io
+└── fly.toml                # Configuración Fly.io apuntando a legacy/Dockerfile
+
 ```
 
 ---

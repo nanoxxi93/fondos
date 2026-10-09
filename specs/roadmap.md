@@ -1,8 +1,8 @@
 # Hoja de ruta (Roadmap)
 
 > **Versión publicada:** v1.0.0 (Legacy en Fly.io)
-> **Estado actual:** Fase 0 (Inicialización SDD y Diseño de Arquitectura AWS Serverless)
-
+> **Estado actual:** Fase 1 Completada (Infraestructura Base CDK)
+ 
 ## Fase 0: Validación Técnica y Bases SDD (Completada)
 - [x] Establecer gobernanza Spec-Driven Development (SDD) importando plantilla de `sdd-template`.
 - [x] Redactar documentos fundacionales (`mission.md`, `constitution.md`, `tech-stack.md`, `intentos-fallidos.md`).
@@ -10,11 +10,13 @@
 - [x] Diseñar arquitectura Always Free (\$0) con AWS CDK, MongoDB Atlas M0, EventBridge Scheduler y Lambda Function URLs.
 - [x] Preservar compatibilidad total con el monolito legacy de Fly.io.
 
-## Fase 1: Infraestructura Base con AWS CDK
-- [ ] Inicializar módulo `infra/` con AWS CDK v2 en TypeScript.
-- [ ] Configurar Stack de SSM Parameter Store para almacenar de forma segura la URI de MongoDB Atlas y tokens de APIs bancarias.
-- [ ] Definir constructs reutilizables para funciones Lambda con bundling de esbuild (`NodejsFunction`).
-- [ ] Implementar tests unitarios de infraestructura (`assertions`).
+## Fase 1: Infraestructura Base con AWS CDK (Completada)
+- [x] Reorganizar y encapsular el monolito Express en `legacy/` manteniendo `fly.toml` y `npm start`.
+- [x] Inicializar módulo `infra/` con AWS CDK v2 en TypeScript.
+- [x] Configurar Stack de SSM Parameter Store para almacenar de forma segura la URI de MongoDB Atlas y tokens de APIs bancarias con `RemovalPolicy.RETAIN`.
+- [x] Definir construct reutilizable `FondosFunction` para funciones Lambda con bundling de esbuild local (`NodejsFunction`).
+- [x] Implementar tests unitarios de infraestructura con `@aws-cdk/assertions` (`npm test`) y síntesis de CloudFormation (`npm run synth`).
+
 
 ## Fase 2: Ingesta Serverless Desacoplada (Scrapers en Lambdas)
 - [ ] Migrar catálogo y scraper de ERNI (Inteligo) a TypeScript con tipado estricto y handler de Lambda.
@@ -28,18 +30,20 @@
 - [ ] Crear Lambda Handler para la API de consulta y enlazarla con una **AWS Lambda Function URL** (HTTPS con cabeceras CORS).
 - [ ] Implementar caché de cabeceras HTTP (`Cache-Control`) para optimizar llamadas repetitivas.
 
-## Fase 4: Frontend Estático y Despliegue en GitHub Pages
-- [ ] Adaptar el dashboard de visualización (Chart.js) a una Single Page Application (SPA) estática en `public/`.
+## Fase 4: Frontend Estático (React + Vite) y Despliegue en GitHub Pages
+- [ ] Construir el dashboard de visualización con React + Vite + TypeScript y Chart.js como SPA estática en `frontend/` (o `public/`).
 - [ ] Conectar la SPA a la Lambda Function URL en lugar de las rutas Express de Fly.io.
 - [ ] Configurar GitHub Pages para servir el dashboard con dominio o subdominio gratuito.
 - [ ] Configurar GitHub Actions para validación automática de SDD y verificación de tipos en cada PR.
+
 
 ---
 
 ## Tareas Sueltas
 
 ### En curso
-- Inicialización del marco SDD y documentación en `README.md`.
+- Ninguna (Fase 1 completada, lista para iniciar Fase 2).
+
 
 ### En main, sin versión todavía
 - Ninguna.

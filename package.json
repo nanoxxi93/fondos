@@ -3,10 +3,10 @@
   "type": "module",
   "version": "1.0.0",
   "description": "Comparador de fondos mutuos ERNI, BBVA y Tyba",
-  "main": "index.js",
+  "main": "legacy/index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node --watch index.js",
+    "start": "node legacy/index.js",
+    "dev": "node --watch legacy/index.js",
     "lint": "eslint ."
   },
   "keywords": ["fondos", "erni", "bbva", "tyba"],
