@@ -87,6 +87,23 @@ describe('FondosStack - Infraestructura Base', () => {
       State: 'ENABLED',
     });
   });
+
+  test('Debe aprovisionar la funcion Lambda TybaScraperFunction con 256MB y timeout de 60s', () => {
+    template.hasResourceProperties('AWS::Lambda::Function', {
+      Runtime: 'nodejs24.x',
+      MemorySize: 256,
+      Timeout: 60,
+      Description: 'Scraper serverless bajo demanda de fondos mutuos Tyba (Credicorp Capital)',
+    });
+  });
+
+  test('Debe verificar exactamente 3 funciones Lambda en el stack (Erni, Bbva y Tyba)', () => {
+    template.resourceCountIs('AWS::Lambda::Function', 3);
+  });
+
+  test('Debe verificar exactamente 2 reglas de EventBridge Scheduler (solo ERNI y BBVA, ninguna para Tyba)', () => {
+    template.resourceCountIs('AWS::Events::Rule', 2);
+  });
 });
 
 describe('FondosFunction Construct', () => {

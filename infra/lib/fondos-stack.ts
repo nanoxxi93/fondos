@@ -18,6 +18,7 @@ export class FondosStack extends Stack {
   public readonly erniScraperScheduleRule: events.Rule;
   public readonly bbvaScraperFunction: FondosFunction;
   public readonly bbvaScraperScheduleRule: events.Rule;
+  public readonly tybaScraperFunction: FondosFunction;
 
   constructor(scope: Construct, id: string, props?: FondosStackProps) {
     super(scope, id, props);
@@ -85,5 +86,16 @@ export class FondosStack extends Stack {
     this.bbvaScraperScheduleRule.addTarget(
       new targets.LambdaFunction(this.bbvaScraperFunction)
     );
+
+    // --- Scraper Serverless de Tyba (Credicorp Capital) ---
+    // Invocación manual bajo demanda sin regla de EventBridge Scheduler
+    this.tybaScraperFunction = new FondosFunction(this, 'TybaScraperFunction', {
+      entry: path.join(__dirname, '../../src/scrapers/tyba/handler.ts'),
+      handler: 'handler',
+      timeout: Duration.seconds(60),
+      memorySize: 256,
+      ssmPrefix: this.ssmPrefix,
+      description: 'Scraper serverless bajo demanda de fondos mutuos Tyba (Credicorp Capital)',
+    });
   }
 }

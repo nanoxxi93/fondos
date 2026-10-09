@@ -8,10 +8,12 @@
     "start": "node legacy/index.js",
     "dev": "node --watch legacy/index.js",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "scrape:bbva": "tsx src/scrapers/bbva/run-local.ts",
-    "scrape:erni": "tsx src/scrapers/erni/run-local.ts"
+    "scrape:erni": "tsx src/scrapers/erni/run-local.ts",
+    "scrape:tyba": "tsx src/scrapers/tyba/run-local.ts"
   },
   "keywords": [
     "fondos",

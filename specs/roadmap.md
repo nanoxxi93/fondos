@@ -1,13 +1,13 @@
 # Hoja de ruta (Roadmap)
 
 > **Versión publicada:** v1.0.0 (Legacy en Fly.io)
-> **Estado actual:** Fase 2.2 Completada (Ingesta Serverless de BBVA)
+> **Estado actual:** Fase 2.3 Completada (Ingesta Serverless de Tyba)
  
 ## Fase 0: Validación Técnica y Bases SDD (Completada)
 - [x] Establecer gobernanza Spec-Driven Development (SDD) importando plantilla de `sdd-template`.
 - [x] Redactar documentos fundacionales (`mission.md`, `constitution.md`, `tech-stack.md`, `intentos-fallidos.md`).
 - [x] Evaluar y descartar DynamoDB por estrangulamiento de RCU/WCU en Free Tier (`IF-001`).
-- [x] Diseñar arquitectura Always Free (\$0) con AWS CDK, MongoDB Atlas M0, EventBridge Scheduler y Lambda Function URLs.
+- [x] Diseñar arquitectura Always Free ($0) con AWS CDK, MongoDB Atlas M0, EventBridge Scheduler y Lambda Function URLs.
 - [x] Preservar compatibilidad total con el monolito legacy de Fly.io.
 
 ## Fase 1: Infraestructura Base con AWS CDK (Completada)
@@ -21,7 +21,7 @@
 ## Fase 2: Ingesta Serverless Desacoplada (Scrapers en Lambdas por Fuente)
 - [x] **Fase 2.1 (ERNI / Inteligo):** [Ingesta Serverless de ERNI](2026-10-08-ingesta-erni/) — Descubrimiento dinámico de fondos activos, extracción de series temporales de valores cuota vía API v2 y sincronización en MongoDB Atlas.
 - [x] **Fase 2.2 (BBVA):** [Ingesta Serverless de BBVA](2026-10-09-ingesta-bbva/) — Autenticación dinámica TSEC vía ASO V02, catálogo canónico de 21 fondos (incluyendo 421 y BBVAEM), extracción de retornos diarios y Lambda BbvaScraperFunction con EventBridge a las 23:15 UTC.
-- [ ] **Fase 2.3 (Tyba):** Migrar catálogo y scraper de Tyba a TypeScript y handler de Lambda.
+- [x] **Fase 2.3 (Tyba):** [Ingesta Serverless de Tyba](2026-10-09-ingesta-tyba/) — Ingesta bajo demanda con autenticación por sesión, catálogo híbrido de 30 fondos de Credicorp Capital y persistencia en MongoDB Atlas.
 - [x] Configurar reglas de EventBridge Scheduler para disparo diario de ERNI (23:00 UTC) y BBVA (23:15 UTC) post-cierre de mercado.
 - [x] Implementar manejo singleton y reutilización de conexión a MongoDB Atlas en `src/shared/db.ts`.
 
@@ -42,7 +42,7 @@
 ## Tareas Sueltas
 
 ### En curso
-- Ninguna. Próximo paso: Fase 2.3 (Scraper Serverless de Tyba).
+- Ninguna.
 
 
 ### En main, sin versión todavía

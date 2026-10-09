@@ -35,3 +35,4 @@ export function getQuotaModel(sourceName: string): Model<IQuota> {
 
 export const ErniQuotaModel = getQuotaModel("erni");
 export const BbvaQuotaModel = getQuotaModel("bbva");
+export const TybaQuotaModel = getQuotaModel("tyba");

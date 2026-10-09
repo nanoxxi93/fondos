@@ -108,13 +108,28 @@ cp .env.example .env
 | `NODE_ENV` | Si existe, carga también `.env.{NODE_ENV}` y pisa valores |
 | `MONGO_DB_URI` | URI de MongoDB. Obligatoria |
 | `ERNI_APIKEY` | Subscription key de Inteligo / ERNI |
-| `TYBA_APIKEY` | Token `authorization` de Tyba |
-| `TYBA_APP_PROOF` | Header `X-App-Proof` de Tyba. También `?appproof=` |
+| `TYBA_APIKEY` / `TYBA_AUTHORIZATION` | Token Bearer JWT (`authorization`) de Tyba |
+| `TYBA_REFRESH_TOKEN` | Token opcional para auto-renovación transparente de sesión (HTTP 401) |
+| `TYBA_APP_PROOF` | Cabecera `x-app-proof` de Tyba (opcional; se autogenera dinámicamente vía RSA-4096) |
 | `BBVA_APIKEY` | Header `Tsec` de BBVA. En producción usa esto; evita Puppeteer |
 | `SCRAPE_TOKEN` | Si está definida, `/api/*` exige `?token=` o `Authorization: Bearer` |
 | `BBVA_HEADLESS` | `false` abre Chrome visible al capturar `tsec`. Default headless |
 
-### Uso Local
+### Ejecución de Scrapers Serverless (Local)
+Cada scraper modular puede ejecutarse de forma aislada en local antes o después de desplegar en AWS:
+
+```bash
+# Ingesta de ERNI (Inteligo)
+npm run scrape:erni
+
+# Ingesta de BBVA Asset Management
+npm run scrape:bbva
+
+# Ingesta bajo demanda de Tyba (Credicorp Capital)
+npm run scrape:tyba -- --authorization "<token_jwt>" [--refresh-token "<token>"] [--days 30] [--dry-run]
+```
+
+### Uso Local del Servidor Monolítico
 ```bash
 npm install
 npm start
