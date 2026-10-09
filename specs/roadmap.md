@@ -1,7 +1,7 @@
 # Hoja de ruta (Roadmap)
 
 > **Versión publicada:** v1.0.0 (Legacy en Fly.io)
-> **Estado actual:** Fase 2.1 Completada (Ingesta Serverless de ERNI)
+> **Estado actual:** Fase 2.2 Completada (Ingesta Serverless de BBVA)
  
 ## Fase 0: Validación Técnica y Bases SDD (Completada)
 - [x] Establecer gobernanza Spec-Driven Development (SDD) importando plantilla de `sdd-template`.
@@ -42,7 +42,7 @@
 ## Tareas Sueltas
 
 ### En curso
-- Ninguna. Próximo paso: Fase 2.2 (Scraper Serverless de BBVA).
+- Ninguna. Próximo paso: Fase 2.3 (Scraper Serverless de Tyba).
 
 
 ### En main, sin versión todavía
