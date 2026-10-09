@@ -11,6 +11,16 @@ Categorías: **Añadido** (algo nuevo) · **Cambiado** (algo existente se compor
 ### 2026-10-09
 
 #### Añadido
+- Implementación completa de la Fase 2.2 (Ingesta Serverless de BBVA Asset Management):
+  - Especificación SDD completa en [`specs/2026-10-09-ingesta-bbva/`](specs/2026-10-09-ingesta-bbva/) (`spec.md`, `plan.md`, `tasks.md`, `checklist.md`).
+  - Scraper modular en `src/scrapers/bbva/`: catálogo canónico de 21 fondos en `catalog.ts` (cruzando los 19 legados e incorporando los 2 nuevos fondos `421` y `BBVAEM`), contratos TypeBox en `types.ts`, normalización canónica en `parser.ts`, cliente HTTP con `fetch` nativo y autenticación dinámica TSEC en `client.ts`, y Lambda handler serverless en `handler.ts`.
+  - Autenticación dinámica TSEC vía `POST /ASO/TechArchitecture/grantingTickets/V02`, eliminando por completo la dependencia pesada de Puppeteer/Chromium del código legado.
+  - Sincronización del catálogo de 21 fondos mutuos de BBVA en la colección `funds` e inserción masiva idempotente de valores cuota en la colección `bbva` (modelo Mongoose `BbvaQuotaModel`).
+  - Función Lambda `BbvaScraperFunction` (256 MB, 60s timeout, Node.js 24) aprovisionada en AWS CDK en `infra/lib/fondos-stack.ts`.
+  - Regla de Amazon EventBridge Scheduler `BbvaScraperScheduleRule` para ejecución diaria a las 23:15 UTC (18:15 PET), escalonada 15 minutos después de ERNI.
+  - Suite de 12 pruebas unitarias en `test/scrapers/bbva.test.ts` con Vitest (25/25 pruebas totales en la raíz).
+  - Pruebas sintéticas con `@aws-cdk/assertions` en `infra/test/fondos-stack.test.ts` (8/8 pruebas Jest pasando).
+  - Script de prueba local en `src/scrapers/bbva/run-local.ts`.
 - Implementación completa de la Fase 2.1 (Ingesta Serverless de ERNI / Inteligo):
   - Scraper modular en `src/scrapers/erni/`: contratos TypeBox en `types.ts`, parser y lógica de series en `parser.ts`, cliente HTTP con `fetch` nativo en `client.ts`, y Lambda handler serverless en `handler.ts`.
   - Capa de persistencia y utilidades en `src/shared/`: conexión singleton a MongoDB Atlas en `db.ts`, esquemas Mongoose para catálogo dinámico `funds` y cuotas canónicas `erni`, concurrencia controlada por lotes `pMap` y formateo de fechas en `utils.ts`, y resolución de parámetros en SSM Parameter Store con caché en memoria en `config.ts`.

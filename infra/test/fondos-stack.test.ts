@@ -70,6 +70,23 @@ describe('FondosStack - Infraestructura Base', () => {
       State: 'ENABLED',
     });
   });
+
+  test('Debe aprovisionar la funcion Lambda BbvaScraperFunction con 256MB y timeout de 60s', () => {
+    template.hasResourceProperties('AWS::Lambda::Function', {
+      Runtime: 'nodejs24.x',
+      MemorySize: 256,
+      Timeout: 60,
+      Description: 'Scraper serverless diario de fondos mutuos BBVA',
+    });
+  });
+
+  test('Debe configurar la regla de EventBridge Scheduler para disparo diario a las 23:15 UTC', () => {
+    template.hasResourceProperties('AWS::Events::Rule', {
+      ScheduleExpression: 'cron(15 23 * * ? *)',
+      Description: 'Disparo diario del scraper de BBVA post-cierre de mercado (18:15 PET / 23:15 UTC)',
+      State: 'ENABLED',
+    });
+  });
 });
 
 describe('FondosFunction Construct', () => {

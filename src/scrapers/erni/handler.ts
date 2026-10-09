@@ -28,6 +28,9 @@ export async function handler(event?: LambdaEvent): Promise<LambdaResult> {
 
   // 2. Conectar a base de datos y resolver credenciales
   const { erniApiKey } = await getConfig();
+  if (!erniApiKey) {
+    throw new Error("ERNI_APIKEY no encontrada en la configuración");
+  }
   await connectToDatabase();
 
   // 3. Descubrimiento dinámico de fondos activos

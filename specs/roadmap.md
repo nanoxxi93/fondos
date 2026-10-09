@@ -20,9 +20,9 @@
 
 ## Fase 2: Ingesta Serverless Desacoplada (Scrapers en Lambdas por Fuente)
 - [x] **Fase 2.1 (ERNI / Inteligo):** [Ingesta Serverless de ERNI](2026-10-08-ingesta-erni/) — Descubrimiento dinámico de fondos activos, extracción de series temporales de valores cuota vía API v2 y sincronización en MongoDB Atlas.
-- [ ] **Fase 2.2 (BBVA):** Migrar catálogo y scraper de BBVA a TypeScript y handler de Lambda.
+- [x] **Fase 2.2 (BBVA):** [Ingesta Serverless de BBVA](2026-10-09-ingesta-bbva/) — Autenticación dinámica TSEC vía ASO V02, catálogo canónico de 21 fondos (incluyendo 421 y BBVAEM), extracción de retornos diarios y Lambda BbvaScraperFunction con EventBridge a las 23:15 UTC.
 - [ ] **Fase 2.3 (Tyba):** Migrar catálogo y scraper de Tyba a TypeScript y handler de Lambda.
-- [x] Configurar regla de EventBridge Scheduler para disparo diario de ERNI a las 23:00 UTC post-cierre de mercado.
+- [x] Configurar reglas de EventBridge Scheduler para disparo diario de ERNI (23:00 UTC) y BBVA (23:15 UTC) post-cierre de mercado.
 - [x] Implementar manejo singleton y reutilización de conexión a MongoDB Atlas en `src/shared/db.ts`.
 
 ## Fase 3: API Serverless y Motor de Analítica

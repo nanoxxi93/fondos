@@ -16,6 +16,8 @@ export class FondosStack extends Stack {
   public readonly ssmPrefix: string;
   public readonly erniScraperFunction: FondosFunction;
   public readonly erniScraperScheduleRule: events.Rule;
+  public readonly bbvaScraperFunction: FondosFunction;
+  public readonly bbvaScraperScheduleRule: events.Rule;
 
   constructor(scope: Construct, id: string, props?: FondosStackProps) {
     super(scope, id, props);
@@ -62,6 +64,26 @@ export class FondosStack extends Stack {
 
     this.erniScraperScheduleRule.addTarget(
       new targets.LambdaFunction(this.erniScraperFunction)
+    );
+
+    // --- Scraper Serverless de BBVA Asset Management ---
+    this.bbvaScraperFunction = new FondosFunction(this, 'BbvaScraperFunction', {
+      entry: path.join(__dirname, '../../src/scrapers/bbva/handler.ts'),
+      handler: 'handler',
+      timeout: Duration.seconds(60),
+      memorySize: 256,
+      ssmPrefix: this.ssmPrefix,
+      description: 'Scraper serverless diario de fondos mutuos BBVA',
+    });
+
+    // Regla de EventBridge Scheduler para disparo diario a las 23:15 UTC (18:15 hora de Lima)
+    this.bbvaScraperScheduleRule = new events.Rule(this, 'BbvaScraperScheduleRule', {
+      schedule: events.Schedule.cron({ minute: '15', hour: '23' }),
+      description: 'Disparo diario del scraper de BBVA post-cierre de mercado (18:15 PET / 23:15 UTC)',
+    });
+
+    this.bbvaScraperScheduleRule.addTarget(
+      new targets.LambdaFunction(this.bbvaScraperFunction)
     );
   }
 }

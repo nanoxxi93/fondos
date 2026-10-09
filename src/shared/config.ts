@@ -2,7 +2,8 @@ import { SSMClient, GetParametersCommand } from "@aws-sdk/client-ssm";
 
 export interface AppConfig {
   mongoDbUri: string;
-  erniApiKey: string;
+  erniApiKey?: string;
+  bbvaApiKey?: string;
 }
 
 let cachedConfig: AppConfig | null = null;
@@ -20,50 +21,50 @@ export async function getConfig(): Promise<AppConfig> {
   // Si las variables ya están en process.env (desarrollo local o test), usarlas directamente
   const envMongoUri = process.env.MONGO_DB_URI;
   const envErniApiKey = process.env.ERNI_APIKEY;
+  const envBbvaApiKey = process.env.BBVA_APIKEY;
 
-  if (envMongoUri && envErniApiKey) {
+  if (envMongoUri && (envErniApiKey || envBbvaApiKey)) {
     cachedConfig = {
       mongoDbUri: envMongoUri,
       erniApiKey: envErniApiKey,
+      bbvaApiKey: envBbvaApiKey,
     };
     return cachedConfig;
   }
 
   // Si estamos en AWS Lambda o falta alguna variable, consultar SSM Parameter Store
   const ssmPrefix = process.env.SSM_PREFIX || "/fondos/prod";
-  const mongoParamName = `${ssmPrefix}/mongo_db_uri`;
-  const erniParamName = `${ssmPrefix}/erni_apikey`;
+  const mongoParam = `${ssmPrefix}/mongo_db_uri`;
+  const erniParam = `${ssmPrefix}/erni_apikey`;
+  const bbvaParam = `${ssmPrefix}/bbva_apikey`;
 
   const ssmClient = new SSMClient({});
   const command = new GetParametersCommand({
-    Names: [mongoParamName, erniParamName],
+    Names: [mongoParam, erniParam, bbvaParam],
     WithDecryption: true,
   });
 
   const response = await ssmClient.send(command);
   const parameters = response.Parameters || [];
 
-  const mongoParam = parameters.find((p) => p.Name === mongoParamName);
-  const erniParam = parameters.find((p) => p.Name === erniParamName);
+  const foundMongo = parameters.find((p) => p.Name === mongoParam);
+  const foundErni = parameters.find((p) => p.Name === erniParam);
+  const foundBbva = parameters.find((p) => p.Name === bbvaParam);
 
-  const resolvedMongoUri = mongoParam?.Value || envMongoUri;
-  const resolvedErniApiKey = erniParam?.Value || envErniApiKey;
+  const resolvedMongoUri = foundMongo?.Value || envMongoUri;
+  const resolvedErniKey = foundErni?.Value || envErniApiKey;
+  const resolvedBbvaKey = foundBbva?.Value || envBbvaApiKey;
 
   if (!resolvedMongoUri) {
     throw new Error(
-      `No se pudo resolver MONGO_DB_URI (parámetro SSM: ${mongoParamName} o variable de entorno)`
-    );
-  }
-
-  if (!resolvedErniApiKey) {
-    throw new Error(
-      `No se pudo resolver ERNI_APIKEY (parámetro SSM: ${erniParamName} o variable de entorno)`
+      `No se pudo resolver MONGO_DB_URI (parámetro SSM: ${mongoParam} o variable de entorno)`
     );
   }
 
   cachedConfig = {
     mongoDbUri: resolvedMongoUri,
-    erniApiKey: resolvedErniApiKey,
+    erniApiKey: resolvedErniKey,
+    bbvaApiKey: resolvedBbvaKey,
   };
 
   return cachedConfig;
