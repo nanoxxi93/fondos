@@ -19,3 +19,11 @@ logs
 .env.*
 !.env.example
 _*.json
+
+# Reglas Locales IA
+.ai-context.md
+
+# AWS CDK
+cdk.out/
+.aws/
+

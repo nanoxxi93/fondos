@@ -1,0 +1,26 @@
+name: SDD Validation
+
+on:
+  pull_request:
+    paths:
+      - 'specs/**'
+      - 'src/**'
+
+jobs:
+  validate-specs:
+    name: Validate SDD Artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.1x'
+
+      - name: Validate Specs Structure
+        run: python scripts/validate_sdd.py
+
+      - name: Check constitution compliance
+        run: python scripts/check_constitution.py

@@ -1,18 +1,103 @@
-# Fondos
+# Fondos Mutuos Perú
 
-App Node.js que descarga valores cuota de fondos mutuos (ERNI, BBVA y Tyba), los guarda en MongoDB y muestra un comparador con Chart.js.
+Plataforma de seguimiento y comparación de valor cuota y rendimiento neto de comisiones para fondos mutuos peruanos (**BBVA**, **ERNI / Inteligo** y **Tyba / Credicorp Capital**).
+
+El proyecto implementa una **arquitectura Serverless desacoplada en AWS (Always Free Tier)** gobernada por **Spec-Driven Development (SDD)**, manteniendo a su vez un acceso monolítico legado desplegado en **Fly.io**.
 
 Rendimiento de la tabla: variación del periodo neta de comisión, `(último / primero - 1) * (100 - fee)`.
 
-## Requisitos
+---
 
+## 1. Arquitectura Serverless Desacoplada (AWS Always Free)
+
+La modernización del proyecto traslada la ingesta y consulta a una infraestructura en la nube sin servidores 24/7, garantizando un **costo mensual de \$0.00 de por vida**:
+
+```mermaid
+flowchart TD
+    subgraph INGESTA["1. Flujo de Ingesta Asíncrona (AWS Always Free)"]
+        Cron["Amazon EventBridge Scheduler\n(Trigger Diario post-cierre de mercado)"]
+        Dispatcher["AWS Lambda Dispatcher\n(TypeScript)"]
+        
+        subgraph Scrapers["Scrapers Independientes"]
+            S_BBVA["Lambda Scraper BBVA\n(ASO Past-returns)"]
+            S_ERNI["Lambda Scraper ERNI\n(Inteligo API)"]
+            S_TYBA["Lambda Scraper Tyba\n(Robo-Advisor API)"]
+        end
+        
+        SSM["AWS SSM Parameter Store (Standard)\n(MONGO_DB_URI & Claves bancarias a $0)"]
+        
+        Cron -->|Disparo programado| Dispatcher
+        Dispatcher -->|Invocación desacoplada| S_BBVA
+        Dispatcher -->|Invocación desacoplada| S_ERNI
+        Dispatcher -->|Invocación desacoplada| S_TYBA
+        
+        SSM -.->|Inyección segura de credenciales| S_BBVA
+        SSM -.->|Inyección segura de credenciales| S_ERNI
+        SSM -.->|Inyección segura de credenciales| S_TYBA
+    end
+
+    subgraph STORAGE["2. Almacenamiento Persistente"]
+        Mongo[("MongoDB Atlas (Tier M0 Sandbox)\n512 MB Gratis de por vida\nColección: quotas")]
+        S_BBVA -->|Upsert cuotas| Mongo
+        S_ERNI -->|Upsert cuotas| Mongo
+        S_TYBA -->|Upsert cuotas| Mongo
+    end
+
+    subgraph CONSULTA["3. Flujo de Consulta y Presentación"]
+        User(("Usuario"))
+        GHP["GitHub Pages\n(SPA estática + Chart.js)\nAlojamiento $0 de por vida"]
+        LambdaURL["AWS Lambda Function URL\n(Cálculo TEA & Ranking)\nHTTPS nativo sin API Gateway"]
+
+        User -->|1. Carga Dashboard| GHP
+        GHP -->|2. Petición HTTPS /api/cuotas| LambdaURL
+        LambdaURL -->|Query indexada por rango de fecha| Mongo
+    end
+
+    classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:#232F3E;
+    classDef storage fill:#13AA52,stroke:#232F3E,stroke-width:2px,color:#fff;
+    classDef client fill:#107C41,stroke:#232F3E,stroke-width:2px,color:#fff;
+
+    class Cron,Dispatcher,S_BBVA,S_ERNI,S_TYBA,SSM,LambdaURL aws;
+    class Mongo storage;
+    class User,GHP client;
+```
+
+### Principios del Desacoplamiento:
+1. **Desacoplamiento Temporal (Ingesta vs Consulta):** No hay servidores encendidos 24/7. La extracción corre en pocos segundos una vez al día con EventBridge.
+2. **Aislamiento por Proveedor:** Cada banco/SAF tiene su propia función Lambda aislada. Si una API externa cambia su contrato o tiene downtime, no impacta a las demás fuentes ni a la API de consulta.
+3. **Optimización de Costos (\$0 Always Free):**
+   - **AWS Lambda:** 1,000,000 invocaciones/mes gratuitas de por vida.
+   - **Amazon EventBridge Scheduler:** 14,000,000 invocaciones/mes gratuitas de por vida.
+   - **Lambda Function URLs:** Permite HTTPS directo y CORS sin necesidad de pagar por Amazon API Gateway tras los primeros 12 meses.
+   - **AWS SSM Parameter Store (Standard):** Secretos a costo \$0 (reemplaza a AWS Secrets Manager).
+   - **MongoDB Atlas (M0 Sandbox):** 512 MB sin cobro de RCU/WCU por lecturas analíticas masivas (ver [`IF-001`](specs/intentos-fallidos.md)).
+   - **GitHub Pages:** Hosting estático gratuito e ilimitado para el dashboard.
+4. **Infraestructura como Código (IaC):** Definida mediante **AWS CDK en TypeScript** bajo el directorio `infra/`.
+
+---
+
+## 2. Metodología Spec-Driven Development (SDD)
+
+El proyecto se gestiona mediante la metodología **Spec-Driven Development** en [`specs/`](specs/README.md):
+- [`specs/mission.md`](specs/mission.md) — Misión del producto, usuarios objetivo y alcance.
+- [`specs/constitution.md`](specs/constitution.md) — Reglas y restricciones no negociables (presupuesto \$0, TypeScript estricto, TDD, convivencia con el legado).
+- [`specs/tech-stack.md`](specs/tech-stack.md) — Justificación de tecnologías y alternativas analizadas.
+- [`specs/roadmap.md`](specs/roadmap.md) — Fases de evolución del proyecto.
+- [`specs/intentos-fallidos.md`](specs/intentos-fallidos.md) — Registro de enfoques descartados (ej. `IF-001`: descarte de DynamoDB por estrangulamiento de RCU/WCU).
+
+---
+
+## 3. Servidor Monolítico Legado (Fly.io / Express)
+
+El acceso y despliegue tradicional mediante Express y Docker se mantiene plenamente disponible.
+
+### Requisitos Locales
 - Node.js 24+
 - npm 12+
 - MongoDB (local o Atlas)
 - Claves de API de cada fuente
 
-## Configuración
-
+### Configuración
 ```bash
 cp .env.example .env
 ```
@@ -29,23 +114,20 @@ cp .env.example .env
 | `SCRAPE_TOKEN` | Si está definida, `/api/*` exige `?token=` o `Authorization: Bearer` |
 | `BBVA_HEADLESS` | `false` abre Chrome visible al capturar `tsec`. Default headless |
 
-## Uso local
-
+### Uso Local
 ```bash
 npm install
 npm start
 ```
 
 Desarrollo con recarga:
-
 ```bash
 npm run dev
 ```
 
 Dashboard: [http://localhost:3000](http://localhost:3000)
 
-## Endpoints
-
+### Endpoints Legados
 | Método | Ruta | Descripción |
 | --- | --- | --- |
 | `GET` | `/` | Dashboard. Query: `days` (1-3650, default 30), `currency` (`PEN` o `USD`), `risk` (máximo 1-7) |
@@ -54,44 +136,26 @@ Dashboard: [http://localhost:3000](http://localhost:3000)
 | `GET` | `/api/bbva` | Descarga cuotas BBVA. Query: `days`, `apikey` (tsec opcional) |
 | `GET` | `/api/tyba` | Descarga cuotas Tyba. Query: `days`, `apikey` y `appproof` opcionales |
 
-Ejemplos:
-
-```bash
-curl "http://localhost:3000/?days=90&currency=USD&risk=4"
-curl "http://localhost:3000/api/erni?days=30"
-curl "http://localhost:3000/api/bbva?days=30&apikey=$BBVA_APIKEY"
-```
-
-Scrapers corren en serie (un fondo tras otro) para no saturar las APIs.
-
-## Docker
-
+### Docker Legado
 ```bash
 ./run.sh
 ```
+Compose publica `5001 -> 3000` y lee `.env.development`.
 
-Compose publica `5001 -> 3000` y lee `.env.development`. Imagen Alpine omite el download de Chrome (`PUPPETEER_SKIP_DOWNLOAD`). En contenedor, BBVA necesita `BBVA_APIKEY`.
+### Deploy Legado (Fly.io)
+Push a `main` dispara `.github/workflows/fly-deploy.yml`.
 
-## Deploy (Fly.io)
+---
 
-Push a `main` dispara `.github/workflows/fly-deploy.yml`. Health check usa `/health` para no cargar el dashboard en cada probe.
+## 4. Estructura del Repositorio
 
-Secrets típicos: `MONGO_DB_URI`, `ERNI_APIKEY`, `TYBA_APIKEY`, `TYBA_APP_PROOF`, `BBVA_APIKEY`, `SCRAPE_TOKEN`.
-
-## Estructura
-
-| Archivo | Rol |
+| Directorio / Archivo | Rol |
 | --- | --- |
-| `index.js` | Express, rutas, arranque |
-| `load-env.js` | Carga `.env` antes del resto de módulos |
-| `db.js` | Conexión Mongo y modelo de cuotas |
-| `utils.js` | Fechas, HTTP, upsert, parseo, escape HTML |
-| `erni.js` / `bbva.js` / `tyba.js` | Catálogo + scraper de cada fuente |
-| `tea.js` | Serie relativa y ranking |
-| `html.js` | Dashboard Chart.js |
-
-## Notas
-
-- Colores del gráfico son estables por fondo (hash), no cambian en cada refresh.
-- Puppeteer solo entra si BBVA no tiene `apikey` ni `BBVA_APIKEY`.
-- `npm run lint` corre ESLint.
+| `specs/` | Documentos fundacionales y especificaciones SDD por funcionalidad |
+| `.claude/skills/` | Habilidades del ciclo SDD (`specify`, `plan`, `tasks`, `implement`...) |
+| `scripts/` | Validadores de especificaciones (`validate_sdd.py`, `check_constitution.py`) |
+| `infra/` | *(En desarrollo)* Infraestructura como Código con AWS CDK (TypeScript) |
+| `src/` | *(En desarrollo)* Handlers TypeScript para AWS Lambdas y lógica de dominio |
+| `public/` | *(En desarrollo)* Dashboard estático para GitHub Pages |
+| `index.js`, `db.js`, `tea.js`, `html.js` | [Legado] Servidor Express, Mongoose y vistas monolíticas |
+| `erni.js`, `bbva.js`, `tyba.js` | [Legado] Scrapers y catálogos de fondos |
