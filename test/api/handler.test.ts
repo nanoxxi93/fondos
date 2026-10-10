@@ -56,6 +56,21 @@ describe("Lambda API Handler (src/api/handler.ts)", () => {
     expect(body.timestamp).toBeDefined();
   });
 
+  it("debe intentar conectar a MongoDB en cold start si aún no está conectado y responder 200", async () => {
+    vi.mocked(isMongoReady)
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true);
+
+    const res = await handler({
+      rawPath: "/health",
+      requestContext: { http: { method: "GET" } },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.status).toBe("OK");
+  });
+
   it("debe responder 503 en GET /health cuando MongoDB no está disponible", async () => {
     vi.mocked(isMongoReady).mockReturnValue(false);
 

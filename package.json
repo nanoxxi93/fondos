@@ -22,7 +22,10 @@
     "frontend": "npm --prefix frontend run dev",
     "frontend:dev": "npm --prefix frontend run dev",
     "frontend:build": "npm --prefix frontend run build",
-    "frontend:preview": "npm --prefix frontend run preview"
+    "frontend:preview": "npm --prefix frontend run preview",
+    "infra:synth": "npm --prefix infra run synth",
+    "infra:diff": "npm --prefix infra run diff",
+    "infra:deploy": "npm --prefix infra run deploy"
   },
   "keywords": [
     "fondos",

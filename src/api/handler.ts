@@ -1,4 +1,4 @@
-import { isMongoReady } from "../shared/db.js";
+import { connectToDatabase, isMongoReady } from "../shared/db.js";
 import { calculateTea } from "../domain/tea.js";
 import {
   parseTeaQueryParams,
@@ -100,7 +100,16 @@ export async function handler(
 
   // 3. Endpoint de salud: GET /health
   if (rawPath === "/health") {
-    const ready = isMongoReady();
+    let ready = isMongoReady();
+    if (!ready) {
+      try {
+        await connectToDatabase();
+        ready = isMongoReady();
+      } catch {
+        ready = false;
+      }
+    }
+
     if (!ready) {
       const downBody: HealthResponse = {
         status: "Mongo unavailable",
