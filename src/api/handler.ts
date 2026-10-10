@@ -48,11 +48,14 @@ function jsonResponse(
   body: unknown,
   extraHeaders: Record<string, string> = {}
 ): LambdaFunctionUrlResult {
+  // En AWS Lambda Function URL, la infraestructura de AWS ya inyecta los encabezados CORS.
+  // Evitar duplicar Access-Control-Allow-Origin en el cuerpo para no provocar fallo de CORS en navegadores.
+  const isLambda = Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
   return {
     statusCode,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      ...CORS_HEADERS,
+      ...(isLambda ? {} : CORS_HEADERS),
       ...extraHeaders,
     },
     body: JSON.stringify(body),
@@ -76,10 +79,11 @@ export async function handler(
 
   // 1. Manejo de Preflight CORS (OPTIONS)
   if (method === "OPTIONS") {
+    const isLambda = Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
     return {
       statusCode: 204,
       headers: {
-        ...CORS_HEADERS,
+        ...(isLambda ? {} : CORS_HEADERS),
         "X-Content-Type-Options": "nosniff",
       },
       body: "",

@@ -113,8 +113,8 @@ describe('FondosStack - Infraestructura Base', () => {
       AuthType: 'NONE',
       Cors: {
         AllowOrigins: ['*'],
-        AllowMethods: ['GET'],
-        AllowHeaders: ['content-type', 'authorization'],
+        AllowMethods: ['*'],
+        AllowHeaders: ['*'],
         MaxAge: 86400,
       },
     });

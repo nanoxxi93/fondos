@@ -115,8 +115,8 @@ export class FondosStack extends Stack {
       authType: lambda.FunctionUrlAuthType.NONE,
       cors: {
         allowedOrigins: ['*'],
-        allowedMethods: [lambda.HttpMethod.GET],
-        allowedHeaders: ['content-type', 'authorization'],
+        allowedMethods: [lambda.HttpMethod.ALL],
+        allowedHeaders: ['*'],
         maxAge: Duration.days(1),
       },
     });
