@@ -17,6 +17,6 @@
     "outDir": "./dist"
   },
   "include": ["src/**/*", "test/**/*"],
-  "exclude": ["node_modules", "infra", "legacy", "dist", "frontend"]
+  "exclude": ["node_modules", "infra", "legacy", "dist", "frontend", "test/frontend"]
 }
 

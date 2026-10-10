@@ -17,7 +17,7 @@
     "api:local": "tsx src/api/run-local.ts",
     "server": "tsx src/server.ts",
     "server:dev": "tsx watch src/server.ts",
-    "build:server": "tsc -p tsconfig.json",
+    "build:server": "tsc -p tsconfig.build.json",
     "start:server": "node dist/src/server.js",
     "frontend": "npm --prefix frontend run dev",
     "frontend:dev": "npm --prefix frontend run dev",
