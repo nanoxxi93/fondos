@@ -223,4 +223,23 @@ describe("Express Server (src/server.ts)", () => {
     const text = await res.text();
     expect(text).toBe("Error interno");
   });
+
+  it("debe incluir cabeceras CORS en todas las respuestas HTTP", async () => {
+    vi.mocked(isMongoReady).mockReturnValue(true);
+
+    const res = await fetch(`${baseUrl}/health`);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    expect(res.headers.get("access-control-allow-methods")).toContain("GET");
+  });
+
+  it("debe responder HTTP 204 No Content ante peticiones preflight OPTIONS con cabeceras CORS", async () => {
+    const res = await fetch(`${baseUrl}/api/tea`, {
+      method: "OPTIONS",
+    });
+    expect(res.status).toBe(204);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    expect(res.headers.get("access-control-allow-methods")).toContain("GET");
+    expect(res.headers.get("access-control-allow-headers")).toContain("Content-Type");
+  });
 });
+

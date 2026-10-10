@@ -71,13 +71,18 @@ function resolveFundMetadata(
   const dbKey = `${source}:${idFondo}`;
   const fromDb = dbFundMap.get(dbKey);
   if (fromDb) {
+    let fee = fromDb.fee;
+    // Si la fuente es Tyba y la comisión en BD provino en ratio decimal (<= 0.20), normalizar a porcentaje
+    if (source === "tyba" && fee <= 0.2 && fee > 0) {
+      fee = Number(+(fee * 100).toFixed(4));
+    }
     return {
       idFondo,
       source,
       name: normalizeFundName(fromDb.name, source),
       currency: fromDb.currency,
       risk: fromDb.risk,
-      fee: fromDb.fee,
+      fee,
     };
   }
 

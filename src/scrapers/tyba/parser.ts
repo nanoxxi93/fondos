@@ -69,10 +69,15 @@ export function mapPortfolioMetadata(
   const name = item.name?.trim() || catalogFallback?.name || item.id;
   const currency = item.currency === 'PEN' ? 'PEN' : 'USD';
   const risk = mapRiskLevel(item.risk, item.riskLevel, catalogFallback?.risk ?? 4);
-  const fee =
+  // La API de Tyba retorna la comisión en ratio decimal (ej: 0.01 = 1%, 0.0081 = 0.81%).
+  // Si el valor viene en decimal (<= 0.20), lo multiplicamos por 100 para unificar a porcentaje.
+  const rawComission =
     typeof item.comission === 'number' && Number.isFinite(item.comission)
-      ? item.comission
+      ? item.comission <= 0.2
+        ? item.comission * 100
+        : item.comission
       : catalogFallback?.fee ?? 0;
+  const fee = Number(+rawComission.toFixed(4));
 
   return {
     idFondo: item.id,

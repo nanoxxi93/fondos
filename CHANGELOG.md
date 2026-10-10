@@ -24,6 +24,19 @@ Categorías: **Añadido** (algo nuevo) · **Cambiado** (algo existente se compor
   - Saneamiento y migración en caliente de los 17 registros existentes en la colección `funds` de MongoDB Atlas.
 
 #### Añadido
+- Implementación completa de la Fase 4: [Dashboard SPA Moderno (React + Vite + Tailwind) y Despliegue en GitHub Pages](specs/2026-10-09-frontend-dashboard-gh-pages/):
+  - Creación de la Single Page Application (SPA) desacoplada en `frontend/` utilizando React 19, TypeScript estricto, Vite 6 y Tailwind CSS v3 con empaquetado optimizado de alto rendimiento (~145 kB gzip total).
+  - Diseño Fintech moderno con tema dual (Dark / Light mode) persistente en `localStorage` con detección inicial del sistema operativo (`useTheme.ts`).
+  - Cuadrícula bento de métricas financieras clave (`KpiBentoGrid.tsx`): cálculo reactivo del Top 1 de rentabilidad neta, fondo más conservador (menor riesgo con retorno positivo), promedio del mercado y conteo total de fondos activos.
+  - Barra de filtros interactiva (`FilterBar.tsx`): selector en píldoras (`7D`, `30D`, `90D`, `180D`, `1A`, `3A`, `YTD`), input manual de días, interruptores de moneda (`Todas`, `PEN`, `USD`), slider de riesgo (1 a 7) y pestañas por administradora (`BBVA`, `Inteligo`, `Tyba`).
+  - Gráfico interactivo de series temporales (`ChartView.tsx`): renderizado con Chart.js y `react-chartjs-2`, puenteo de feriados con `spanGaps: true`, padding dinámico de escala Y (`grace: '5%'`), tooltips financieros contextuales y botones de acción rápida (*"Ver solo Top 5"*, *"Mostrar todos"*, *"Ocultar todos"*).
+  - Simulador de retorno financiero (`Simulator.tsx`): calculadora interactiva para proyectar la ganancia o pérdida neta real en soles o dólares a partir de un capital ingresado.
+  - Tabla de datos responsiva (`FundsTable.tsx`): encabezados sticky, buscador de texto en tiempo real, ordenamiento interactivo por cualquier columna (ascendente/descendente), badges visuales por administradora y nivel de riesgo, y checkboxes sincronizados bidireccionalmente con las curvas del gráfico.
+  - Componentes de retroalimentación de estado (`Feedback.tsx`): skeletons animados durante la carga, tarjeta de error con botón de reintento ante fallos de red o backend offline, y vista vacía para combinaciones de filtros sin resultados.
+  - Flujo de integración y despliegue continuo (`.github/workflows/deploy-gh-pages.yml`): pipeline de GitHub Actions para compilación estática y publicación automática en GitHub Pages con `actions/deploy-pages@v4`.
+  - Aislamiento total del entorno de Fly.io: configuración de `.dockerignore` y `tsconfig.json` para garantizar cero impacto en el tamaño de la imagen Docker de producción (<40 MB RAM) y preservación intacta del SSR legacy en `src/views/html.ts`.
+  - 7 pruebas unitarias nuevas en `test/frontend/formatters.test.ts` (135 pruebas automatizadas pasando al 100%).
+
 - Servidor Express unificado y vista Server-Side Rendering (SSR) en TypeScript (`src/server.ts`, `src/views/html.ts`):
   - Punto de entrada Express modular y ligero para despliegue en Fly.io o ejecución local sin dependencias de frameworks frontend (cero React, cero Vite) preservando la interactividad del dashboard clásico.
   - Endpoint `GET /` que sirve el HTML interactivo completo con formulario de filtros (`days`, `currency`, `risk`), checkboxes dinámicos agrupados por administradora, canvas Chart.js y tabla comparativa de rendimientos.
@@ -82,6 +95,20 @@ Categorías: **Añadido** (algo nuevo) · **Cambiado** (algo existente se compor
   - Script de prueba local `src/scrapers/erni/run-local.ts`.
 
 #### Corregido
+- Escala de comisiones de Tyba normalizada a porcentaje (`src/scrapers/tyba/catalog.ts`, `src/scrapers/tyba/parser.ts`, `src/domain/tea.ts`):
+  - Detección y conversión automática de valores en ratio decimal de la API de Tyba (`0.01` = 1%, `0.0081` = 0.81%) multiplicándolos por 100 para unificar el estándar porcentual del proyecto.
+  - Corrección de la fórmula de variación neta de TEA en `tea.ts` `(100 - meta.fee)` y compatibilidad retroactiva para registros previamente persistidos en MongoDB Atlas.
+  - Actualización de los 30 fondos del catálogo estático de Tyba con su porcentaje nominal directo.
+- Refinamientos de UX, responsividad y estabilidad en el Dashboard SPA (`frontend/`):
+  - Soporte universal de respuesta de salud en `frontend/src/services/api.ts` tolerando texto plano (`"OK"`) de Fly.io y JSON de la API Serverless.
+  - Adaptación completa de contraste y modo dual (Light/Dark) con clases semánticas `dark:` en toda la interfaz.
+  - Preservación de selección personalizada de fondos (`viewMode: 'custom'`) ante cambios de horizonte temporal.
+  - Cálculo dinámico de Top 5 restringido por administradora seleccionada (`BBVA`, `Inteligo`, `Tyba`).
+  - Tooltips de Chart.js aislados (`mode: 'nearest'`, `axis: 'xy'`) para mostrar exclusivamente la curva bajo el cursor.
+  - Diseño responsivo al corte de 1024px: botones de visualización y píldoras del simulador se ubican en fila propia en pantallas menores a 1024px y se alinean a la derecha en escritorio (>= 1024px).
+  - Eliminación de saltos de scroll involuntarios en el simulador mediante desactivación de Scroll Anchoring del navegador (`overflow-anchor: none`), `history.scrollRestoration = 'manual'` y `animation: false` en Chart.js.
+  - Ajuste de etiqueta de niveles de riesgo 1 y 2 a únicamente "Bajo" (eliminando "Muy Bajo").
+  - Limpieza de menciones técnicas de infraestructura en la cabecera y simplificación del pie de página a "Fondos Mutuos Perú · 2026".
 - Configuración de `eslint.config.js` para ignorar artefactos temporales y empaquetados de AWS CDK (`**/cdk.out/**`).
 - Configuración de empaquetado `esbuild` en `FondosFunction` CDK construct para compilar código fuente en `src/` relativo a la raíz del repositorio.
 

@@ -88,7 +88,7 @@ describe('Tyba Scraper - Catálogo Canónico Base', () => {
     expect(china.name).toBe('CC Acciones China');
     expect(china.currency).toBe('USD');
     expect(china.risk).toBe(7);
-    expect(china.fee).toBe(0.010252);
+    expect(china.fee).toBe(1.0252);
 
     const rf3 = TYBA_FUNDS_CATALOG['8c2f0120-5156-53ca-b9e7-7fb7059a3a6b'];
     expect(rf3).toBeDefined();
@@ -195,7 +195,7 @@ describe('Tyba Scraper - Parser y Normalización Pura', () => {
       expect(fund.name).toBe('CC Renta Futura III');
       expect(fund.currency).toBe('USD');
       expect(fund.risk).toBe(7);
-      expect(fund.fee).toBe(0.016);
+      expect(fund.fee).toBe(1.6);
       expect(fund.serie).toBe('-');
       expect(fund.updatedAt).toBeInstanceOf(Date);
     });
@@ -211,7 +211,7 @@ describe('Tyba Scraper - Parser y Normalización Pura', () => {
       const fund = mapPortfolioMetadata(item, fallback);
       expect(fund.name).toBe('CC Renta Futura III');
       expect(fund.risk).toBe(7);
-      expect(fund.fee).toBe(0.016);
+      expect(fund.fee).toBe(1.6);
     });
   });
 

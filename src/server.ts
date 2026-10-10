@@ -34,6 +34,18 @@ export function createApp(): express.Express {
   const app = express();
   app.disable("x-powered-by");
 
+  // Middleware CORS para permitir peticiones cross-origin desde la SPA (GitHub Pages y desarrollo local)
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    if (req.method === "OPTIONS") {
+      res.status(204).end();
+      return;
+    }
+    next();
+  });
+
   // Endpoint de salud compatible con los health checks de Fly.io y monitoreo
   app.get("/health", (_req: Request, res: Response) => {
     if (!isMongoReady()) {

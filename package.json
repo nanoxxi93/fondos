@@ -18,7 +18,11 @@
     "server": "tsx src/server.ts",
     "server:dev": "tsx watch src/server.ts",
     "build:server": "tsc -p tsconfig.json",
-    "start:server": "node dist/src/server.js"
+    "start:server": "node dist/src/server.js",
+    "frontend": "npm --prefix frontend run dev",
+    "frontend:dev": "npm --prefix frontend run dev",
+    "frontend:build": "npm --prefix frontend run build",
+    "frontend:preview": "npm --prefix frontend run preview"
   },
   "keywords": [
     "fondos",

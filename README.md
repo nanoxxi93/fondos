@@ -147,6 +147,23 @@ npm run start:server
 
 Dashboard interactivo: [http://localhost:3000](http://localhost:3000)
 
+### Dashboard SPA Moderno (React + Vite + Tailwind)
+El nuevo dashboard estático interactivo para GitHub Pages se puede ejecutar en modo desarrollo o compilar directamente desde la raíz del proyecto:
+
+```bash
+# Iniciar servidor de desarrollo del dashboard (Vite en http://localhost:5173)
+npm run frontend
+
+# O alternativamente:
+npm run frontend:dev
+
+# Compilar para producción (genera bundle estático optimizado en frontend/dist/)
+npm run frontend:build
+
+# Previsualizar el build estático localmente
+npm run frontend:preview
+```
+
 ### Endpoints del Servidor Express (`src/server.ts`)
 
 #### 1. Consulta y Visualización (Públicos)
@@ -182,6 +199,7 @@ fly deploy
 | --- | --- |
 | `specs/` | Documentos fundacionales y especificaciones SDD por funcionalidad |
 | `infra/` | Infraestructura como Código con AWS CDK v2 en TypeScript (`FondosStack`, Lambdas, EventBridge, Function URLs) |
+| `frontend/` | Single Page Application (SPA) desacoplada en React 19 + Vite + Tailwind CSS para GitHub Pages |
 | `src/scrapers/` | Módulos de ingesta y adaptadores bancarios serverless (ERNI, BBVA, Tyba) con `fetch` nativo |
 | `src/domain/` | Motor matemático puro de variación relativa neta de comisiones (`tea.ts`) |
 | `src/api/` | Handler de la AWS Lambda Function URL (`handler.ts`), esquemas TypeBox y servidor local |

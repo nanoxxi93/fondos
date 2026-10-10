@@ -12,3 +12,7 @@
 **/_*.json
 .git
 README.md
+frontend
+infra
+specs
+

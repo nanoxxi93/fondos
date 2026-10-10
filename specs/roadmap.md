@@ -1,7 +1,7 @@
 # Hoja de ruta (Roadmap)
 
 > **Versión publicada:** v1.0.0 (Legacy en Fly.io)
-> **Estado actual:** Fase 3 Completada (API Serverless y Motor de Analítica)
+> **Estado actual:** Fase 4 Completada (Dashboard SPA en GitHub Pages)
  
 ## Fase 0: Validación Técnica y Bases SDD (Completada)
 - [x] Establecer gobernanza Spec-Driven Development (SDD) importando plantilla de `sdd-template`.
@@ -31,11 +31,11 @@
 - [x] Implementar caché de cabeceras HTTP asimétrico (`Cache-Control: public, max-age=3600...` en éxito y `no-store` en errores).
 - [x] Implementar servidor de desarrollo local interactivo en `src/api/run-local.ts` accesible vía `npm run api:local`.
 
-## Fase 4: Frontend Estático (React + Vite) y Despliegue en GitHub Pages
-- [ ] Construir el dashboard de visualización con React + Vite + TypeScript y Chart.js como SPA estática en `frontend/` (o `public/`).
-- [ ] Conectar la SPA a la Lambda Function URL en lugar de las rutas Express de Fly.io.
-- [ ] Configurar GitHub Pages para servir el dashboard con dominio o subdominio gratuito.
-- [ ] Configurar GitHub Actions para validación automática de SDD y verificación de tipos en cada PR.
+## Fase 4: Frontend Estático (React + Vite) y Despliegue en GitHub Pages (Completada)
+- [x] **Fase 4:** [Dashboard SPA Moderno y Despliegue en GitHub Pages](2026-10-09-frontend-dashboard-gh-pages/) — Construir el dashboard de visualización con React + Vite + TypeScript, Tailwind CSS y Chart.js como SPA estática en `frontend/` y despliegue a costo $0 en GitHub Pages.
+- [x] Conectar la SPA a la Lambda Function URL en lugar de las rutas Express de Fly.io.
+- [x] Configurar GitHub Pages para servir el dashboard con dominio o subdominio gratuito.
+- [x] Configurar GitHub Actions para validación automática de SDD y verificación de tipos en cada PR.
 
 
 ---
@@ -44,6 +44,7 @@
 
 ### En curso
 - Ninguna.
+
 
 
 ### En main, sin versión todavía
