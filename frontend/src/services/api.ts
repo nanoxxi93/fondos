@@ -6,7 +6,7 @@ import type { HealthResponse, TeaChartData } from '../types/funds.js';
 const API_BASE_URL: string = (
   import.meta.env.DEV && !import.meta.env.VITE_DIRECT_API
     ? ''
-    : (import.meta.env.VITE_API_BASE_URL || '')
+    : (import.meta.env.VITE_API_BASE_URL || 'https://fondos-purple-fog-9801.fly.dev')
 ).replace(/\/+$/, '');
 
 export interface FetchTeaParams {
