@@ -8,6 +8,7 @@ import {
 import {
   capitalize,
   colorFromKey,
+  normalizeFundName,
   toIsoDateString,
   toUtcMidnight,
 } from "../shared/utils.js";
@@ -73,7 +74,7 @@ function resolveFundMetadata(
     return {
       idFondo,
       source,
-      name: fromDb.name,
+      name: normalizeFundName(fromDb.name, source),
       currency: fromDb.currency,
       risk: fromDb.risk,
       fee: fromDb.fee,
@@ -87,7 +88,7 @@ function resolveFundMetadata(
       return {
         idFondo,
         source: "bbva",
-        name: bbvaConfig.name,
+        name: normalizeFundName(bbvaConfig.name, "bbva"),
         currency: bbvaConfig.currency,
         risk: bbvaConfig.risk,
         fee: bbvaConfig.fee,
@@ -99,7 +100,7 @@ function resolveFundMetadata(
       return {
         idFondo,
         source: "tyba",
-        name: tybaConfig.name,
+        name: normalizeFundName(tybaConfig.name, "tyba"),
         currency: tybaConfig.currency,
         risk: tybaConfig.risk,
         fee: tybaConfig.fee,
@@ -111,7 +112,7 @@ function resolveFundMetadata(
       return {
         idFondo,
         source: "erni",
-        name: erniConfig.name,
+        name: normalizeFundName(erniConfig.name, "erni"),
         currency: erniConfig.currency,
         risk: erniConfig.risk,
         fee: erniConfig.fee,
@@ -219,8 +220,9 @@ export async function calculateTea(options: TeaOptions = {}): Promise<TeaChartDa
       return Number((((val - firstValue) / firstValue) * 100).toFixed(4));
     });
 
-    const colors = colorFromKey(`${meta.source}:${meta.name}`);
-    const label = capitalize(meta.name.replace(/_/g, " "));
+    const normalizedName = normalizeFundName(meta.name, meta.source);
+    const colors = colorFromKey(`${meta.source}:${normalizedName}`);
+    const label = capitalize(normalizedName.replace(/_/g, " "));
 
     datasets.push({
       label,

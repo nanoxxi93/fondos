@@ -3,10 +3,10 @@
   "type": "module",
   "version": "1.0.0",
   "description": "Comparador de fondos mutuos ERNI, BBVA y Tyba",
-  "main": "legacy/index.js",
+  "main": "dist/src/server.js",
   "scripts": {
-    "start": "node legacy/index.js",
-    "dev": "node --watch legacy/index.js",
+    "start": "node dist/src/server.js",
+    "dev": "tsx watch src/server.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -37,8 +37,7 @@
     "@sinclair/typebox": "^0.34.52",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "mongoose": "^8.10.1",
-    "puppeteer": "^24.4.0"
+    "mongoose": "^8.10.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

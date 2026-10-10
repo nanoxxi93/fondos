@@ -1,7 +1,7 @@
 import type { FondosActivosItem, CuotaItem, TarifarioItem } from "./types.js";
 import type { IQuota } from "../../shared/models/quota.model.js";
 import type { IFund } from "../../shared/models/fund.model.js";
-import { toUtcMidnight } from "../../shared/utils.js";
+import { toUtcMidnight, normalizeFundName } from "../../shared/utils.js";
 
 export interface ActiveSerieSelection {
   serie: string;
@@ -98,7 +98,7 @@ export function toFundMetadata(
   return {
     idFondo: fondo.idFondo,
     source: "erni",
-    name: fondo.nombreFondo.trim(),
+    name: normalizeFundName(fondo.nombreFondo, "erni"),
     currency: isUsd ? "USD" : "PEN",
     risk: fondo.riesgo.idRiesgo,
     fee: serieInfo.fee,

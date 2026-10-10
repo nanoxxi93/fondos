@@ -2,7 +2,7 @@ import type { BbvaWeightedAssetValue, BbvaFundDetailData } from "./types.js";
 import type { BbvaFundConfig } from "./catalog.js";
 import type { IQuota } from "../../shared/models/quota.model.js";
 import type { IFund } from "../../shared/models/fund.model.js";
-import { toUtcMidnight, toIsoDateString } from "../../shared/utils.js";
+import { toUtcMidnight, toIsoDateString, normalizeFundName } from "../../shared/utils.js";
 
 /**
  * Normaliza los valores cuota retornados por el endpoint /past-returns
@@ -28,7 +28,8 @@ export function toBbvaFundMetadata(
   catalogFund: BbvaFundConfig,
   apiDetail?: BbvaFundDetailData
 ): IFund {
-  const name = apiDetail?.name?.trim() || catalogFund.name;
+  const rawName = apiDetail?.name?.trim() || catalogFund.name;
+  const name = normalizeFundName(rawName, "bbva");
   const currency = (apiDetail?.fundCurrency?.id === "USD" ? "USD" : "PEN") as "PEN" | "USD";
 
   const apiRisk = apiDetail?.fundGroup?.riskLevel?.id

@@ -136,6 +136,18 @@ describe("ERNI Scraper - Parser y Normalización", () => {
     expect(meta.fee).toBe(0.9);
     expect(meta.serie).toBe("C");
   });
+
+  it("toFundMetadata remueve el prefijo 'FDF' dejando directamente 'IF ...'", () => {
+    const fondoConFdf: FondosActivosItem = {
+      idFondo: "78",
+      nombreFondo: "FDF IF 49 Rendimiento Global 360 FMIV",
+      moneda: { idMoneda: "10", nombreMoneda: "Dolares" },
+      riesgo: { idRiesgo: 3, riesgo: "Medio" },
+      tarifarios: [{ comisionUnificada: 1.2, isDigital: false, serie: { serie: "A", isDigital: false } }],
+    };
+    const meta = toFundMetadata(fondoConFdf, { serie: "A", fee: 1.2, isDigital: false });
+    expect(meta.name).toBe("IF 49 Rendimiento Global 360 FMIV");
+  });
 });
 
 describe("Utilidades - pMap y concurrencia", () => {

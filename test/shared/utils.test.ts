@@ -4,6 +4,7 @@ import {
   toUtcMidnight,
   toIsoDateString,
   capitalize,
+  normalizeFundName,
   colorFromKey,
   escapeHtml,
   toSafeJson,
@@ -61,6 +62,57 @@ describe("Shared Utils (src/shared/utils.ts)", () => {
       expect(col1).toEqual(col2);
       expect(col1.backgroundColor).toContain("hsla(");
       expect(col1.borderColor).toContain("hsla(");
+    });
+  });
+
+  describe("normalizeFundName", () => {
+    it("debe remover el prefijo 'Fondo de Fondos' o 'Fondo De Fondos' en fondos BBVA", () => {
+      expect(
+        normalizeFundName("Fondo de Fondos BBVA Acciones Globales Millennials FMIV", "bbva")
+      ).toBe("BBVA Acciones Globales Millennials FMIV");
+      expect(
+        normalizeFundName("Fondo De Fondos Bbva Conservador Global Dólares Fmiv", "bbva")
+      ).toBe("Bbva Conservador Global Dólares Fmiv");
+      expect(
+        normalizeFundName("Fondo de Fondos BBVA Deuda High Yield  FMIV", "bbva")
+      ).toBe("BBVA Deuda High Yield FMIV");
+    });
+
+    it("debe transformar 'Fondo de Fondos Acciones Globales Real Estate FMIV' directamente a BBVA Acciones...", () => {
+      expect(
+        normalizeFundName("Fondo de Fondos Acciones Globales Real Estate FMIV", "bbva")
+      ).toBe("BBVA Acciones Globales Real Estate FMIV");
+      expect(
+        normalizeFundName("Fondo De Fondos Acciones Globales Real Estate Fmiv")
+      ).toBe("BBVA Acciones Globales Real Estate Fmiv");
+      expect(
+        capitalize(normalizeFundName("Fondo De Fondos Acciones Globales Real Estate Fmiv"))
+      ).toBe("Bbva Acciones Globales Real Estate Fmiv");
+    });
+
+    it("debe remover el prefijo 'FDF' en fondos ERNI dejando directamente 'IF ...'", () => {
+      expect(normalizeFundName("FDF IF 49 Rendimiento Global 360 FMIV", "erni")).toBe(
+        "IF 49 Rendimiento Global 360 FMIV"
+      );
+      expect(normalizeFundName("FDF IF Enfoque Global FMIV", "erni")).toBe(
+        "IF Enfoque Global FMIV"
+      );
+      expect(normalizeFundName("FDF IF Inversión EE.UU. FMIV", "erni")).toBe(
+        "IF Inversión EE.UU. FMIV"
+      );
+      expect(normalizeFundName("Fdf If Inversion India Fmiv", "erni")).toBe(
+        "If Inversion India Fmiv"
+      );
+      expect(
+        capitalize(normalizeFundName("FDF IF 49 Rendimiento Global 360 FMIV", "erni"))
+      ).toBe("If 49 Rendimiento Global 360 Fmiv");
+    });
+
+    it("debe preservar nombres limpios sin prefijos redundantes", () => {
+      expect(normalizeFundName("BBVA Cash Soles FMIV", "bbva")).toBe("BBVA Cash Soles FMIV");
+      expect(normalizeFundName("IF Oportunidad Soles FMIV", "erni")).toBe("IF Oportunidad Soles FMIV");
+      expect(normalizeFundName("CC Acciones China", "tyba")).toBe("CC Acciones China");
+      expect(normalizeFundName("")).toBe("");
     });
   });
 

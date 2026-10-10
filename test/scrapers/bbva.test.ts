@@ -105,6 +105,17 @@ describe("BBVA Scraper - Parser y Normalización", () => {
     expect(metadata.currency).toBe("PEN");
   });
 
+  it("toBbvaFundMetadata limpia prefijos 'Fondo de Fondos' y normaliza nombres de la API", () => {
+    const catalogItem = BBVA_FUNDS_CATALOG["BBVARE-PE"];
+    const mockDetail: BbvaFundDetailData = {
+      id: "BBVARE-PE",
+      name: "Fondo de Fondos Acciones Globales Real Estate FMIV",
+      fundCurrency: { id: "USD" },
+    };
+    const metadata = toBbvaFundMetadata(catalogItem, mockDetail);
+    expect(metadata.name).toBe("BBVA Acciones Globales Real Estate FMIV");
+  });
+
   it("calculateBbvaDateRange calcula correctamente los rangos por defecto y personalizados", () => {
     const custom = calculateBbvaDateRange(30, "2026-01-01", "2026-06-01");
     expect(custom.fromDate).toBe("2026-01-01");

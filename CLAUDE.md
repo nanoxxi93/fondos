@@ -3,7 +3,7 @@
 Comparador y rastreador de rendimiento neto de comisiones para fondos mutuos peruanos (BBVA, ERNI e Inteligo, Tyba / Credicorp Capital).
 
 El proyecto convive bajo dos modalidades:
-1. **Legacy (Fly.io):** Monolito Node.js/Express con Docker y Mongoose existente en la raíz, que se mantiene plenamente operativo para despliegues en Fly.io.
+1. **Express Serverless / Fly.io:** Servidor TypeScript moderno (`src/server.ts`) con Server-Side Rendering (SSR) y endpoints REST, optimizado con Docker multi-stage para Fly.io (<40 MB RAM). El código legado en JavaScript ha sido completamente absorbido y retirado.
 2. **Modern Serverless (AWS + SDD):** Arquitectura desacoplada en AWS (EventBridge Scheduler → Lambdas TypeScript → MongoDB Atlas M0 → Lambda Function URL → GitHub Pages) gestionada con AWS CDK en TypeScript.
 
 - **Spec-Driven Development (SDD)**: Todo nuevo desarrollo sigue estrictamente el ciclo de SDD mediante las skills en `.claude/skills/` (`specify` → `clarify` → `plan` → `tasks` → `checklist` → `analyze` → `implement` → `close` → `publish`).

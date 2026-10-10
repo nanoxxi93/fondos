@@ -15,8 +15,8 @@ Este archivo captura los principios, restricciones y estándares no negociables 
   - **Servicios Prohibidos por Costo:** Queda vetado el uso de Amazon S3 como hosting, Amazon API Gateway y AWS Secrets Manager por generar costos al haber expirado la ventana de 12 meses.
 - **Infraestructura como Código (IaC):** AWS CDK utilizando **TypeScript**.
 - **Lenguaje de Nuevos Componentes:** **TypeScript** con compilación estricta (`strict: true`).
-- **Coexistencia y Respeto al Código Legado:**
-  El servidor monolítico Node.js/Express de Fly.io (`index.js`, `fly.toml`, `Dockerfile`, `bbva.js`, `erni.js`, `tyba.js`, `tea.js`, `html.js`) no debe romperse ni eliminarse; se mantiene 100% operativo para despliegues en Fly.io mientras se construye la arquitectura Serverless en `infra/` y `src/`.
+- **Absorción y Retiro del Código Legado:**
+  El servidor monolítico original en JavaScript (`legacy/`) ha sido completamente absorbido y superado por el servidor Express unificado en TypeScript (`src/server.ts`, `src/views/html.ts`, `src/domain/tea.ts`) y los micro-scrapers serverless en `src/scrapers/`. Fly.io despliega ahora sobre la base moderna tipada mediante Dockerfile multi-stage, quedando el código legado retirado sin deuda técnica.
 
 ## Privacidad, Seguridad y Credenciales
 

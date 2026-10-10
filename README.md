@@ -49,7 +49,7 @@ flowchart TD
         LambdaURL["AWS Lambda Function URL\n(Cálculo TEA & Ranking)\nHTTPS nativo sin API Gateway"]
 
         User -->|1. Carga Dashboard| GHP
-        GHP -->|2. Petición HTTPS /api/cuotas| LambdaURL
+        GHP -->|2. Petición HTTPS /api/tea| LambdaURL
         LambdaURL -->|Query indexada por rango de fecha| Mongo
     end
 
@@ -87,9 +87,9 @@ El proyecto se gestiona mediante la metodología **Spec-Driven Development** en 
 
 ---
 
-## 3. Servidor Monolítico Legado (Fly.io / Express)
+## 3. Servidor Express Unificado (Fly.io / Local)
 
-El acceso y despliegue tradicional mediante Express y Docker se mantiene plenamente disponible.
+El servidor Express modular en TypeScript (`src/server.ts`) y su despliegue en Fly.io vía Docker multi-stage se mantienen plenamente operativos.
 
 ### Requisitos Locales
 - Node.js 24+
@@ -111,9 +111,8 @@ cp .env.example .env
 | `TYBA_APIKEY` / `TYBA_AUTHORIZATION` | Token Bearer JWT (`authorization`) de Tyba |
 | `TYBA_REFRESH_TOKEN` | Token opcional para auto-renovación transparente de sesión (HTTP 401) |
 | `TYBA_APP_PROOF` | Cabecera `x-app-proof` de Tyba (opcional; se autogenera dinámicamente vía RSA-4096) |
-| `BBVA_APIKEY` | Header `Tsec` de BBVA. En producción usa esto; evita Puppeteer |
-| `SCRAPE_TOKEN` | Si está definida, `/api/*` exige `?token=` o `Authorization: Bearer` |
-| `BBVA_HEADLESS` | `false` abre Chrome visible al capturar `tsec`. Default headless |
+| `BBVA_APIKEY` | Header `Tsec` opcional de BBVA (por defecto se autogenera dinámicamente vía API ASO) |
+| `SCRAPE_TOKEN` | Token secreto para proteger los endpoints `/api/erni`, `/api/bbva` y `/api/tyba` (vía `?token=` o `Authorization: Bearer`) |
 
 ### Ejecución de Scrapers Serverless (Local)
 Cada scraper modular puede ejecutarse de forma aislada en local antes o después de desplegar en AWS:
@@ -148,15 +147,25 @@ npm run start:server
 
 Dashboard interactivo: [http://localhost:3000](http://localhost:3000)
 
-### Endpoints del Servidor Express
-| Método | Ruta | Descripción |
-| --- | --- | --- |
-| `GET` | `/` | Dashboard SSR interactivo con Chart.js, filtros y tabla. Query: `days` (1-3650, default 30), `currency` (`PEN` o `USD`), `risk` (máximo 1-7) |
-| `GET` | `/api/tea` | Datos analíticos normalizados en formato JSON (`{ labels, datasets }`) con cabecera de caché |
-| `GET` | `/health` | Health check (`200 OK` si Mongo está conectado; `503` si no) |
-| `GET` | `/api/erni` | Dispara ingesta de ERNI (Inteligo). Requiere `SCRAPE_TOKEN`. Query: `days` |
-| `GET` | `/api/bbva` | Dispara ingesta de BBVA vía API nativa. Requiere `SCRAPE_TOKEN`. Query: `days` |
-| `GET` | `/api/tyba` | Dispara ingesta de Tyba. Requiere `SCRAPE_TOKEN` y cabeceras de sesión (`authorization`, `x-app-proof` opcional) |
+### Endpoints del Servidor Express (`src/server.ts`)
+
+#### 1. Consulta y Visualización (Públicos)
+
+| Método | Ruta | Parámetros (Query) | Descripción y Respuesta |
+| --- | --- | --- | --- |
+| `GET` | `/` | • `days`: Periodo en días (`1` a `3650`, default: `30`)<br>• `currency`: Moneda a filtrar (`PEN` o `USD`, opcional)<br>• `risk`: Nivel de riesgo máximo (`1` a `7`, opcional) | **Dashboard SSR interactivo.** Genera HTML Server-Side Rendered con formulario de filtros, checkboxes dinámicos agrupados por administradora, gráfica interactiva Chart.js y tabla comparativa ordenada por variación neta de comisión: `(último / primero - 1) * (100 - fee)`. |
+| `GET` | `/api/tea` | • `days`: Periodo en días (`1` a `3650`, default: `30`)<br>• `currency`: Moneda a filtrar (`PEN` o `USD`, opcional)<br>• `risk`: Nivel de riesgo máximo (`1` a `7`, opcional) | **API Analítica JSON.** Retorna `{ labels: string[], datasets: TeaDataset[] }` para consumo por clientes o SPA. Incluye cabecera HTTP `Cache-Control: public, max-age=3600, stale-while-revalidate=86400`. |
+| `GET` | `/health` | Ninguno | **Health check.** Retorna `200 OK` (texto `"OK"`) si la conexión a MongoDB está operativa (`isMongoReady()`); o `503 Service Unavailable` (`"Mongo unavailable"`) si la base de datos no está disponible. |
+
+#### 2. Ingesta y Scraping de Datos (`/api/*`)
+
+> **Seguridad (`SCRAPE_TOKEN`):** Si la variable de entorno `SCRAPE_TOKEN` está configurada, estos endpoints exigen validación pasando el token por query param `?token=<SCRAPE_TOKEN>` o por cabecera `Authorization: Bearer <SCRAPE_TOKEN>`. Si no coincide, responden `401 Unauthorized`. Si la variable no está definida en `.env`, el acceso es libre (modo desarrollo local).
+
+| Método | Ruta | Parámetros (Query / Headers) | Descripción y Respuesta |
+| --- | --- | --- | --- |
+| `GET` | `/api/erni` | **Query:**<br>• `days`: Días de histórico (default: `30`; calcula meses equivalentes `Math.ceil(days / 30)`)<br>• `token`: Token de scraping si `SCRAPE_TOKEN` está activo | **Scraper ERNI (Inteligo).** Invoca el handler de ERNI autenticado con `ERNI_APIKEY`. Retorna JSON `{ statusCode: 200, message, totalCuotas, fondosProcesados }`. |
+| `GET` | `/api/bbva` | **Query:**<br>• `days`: Días de histórico a extraer (`1` a `3650`, default: `30`)<br>• `token`: Token de scraping si `SCRAPE_TOKEN` está activo | **Scraper BBVA Asset Management.** Consulta la API ASO de BBVA con autenticación dinámica TSEC (o `BBVA_APIKEY`). Retorna JSON `{ statusCode: 200, message, totalFondos, cuotasInsertadas }`. |
+| `GET` | `/api/tyba` | **Autenticación Tyba (requerida):**<br>• Header `Authorization: Bearer <jwt>` o query `?authorization=` / `?apikey=` (fallback: variable `TYBA_AUTHORIZATION` en `.env`)<br>**Parámetros opcionales:**<br>• Header `x-app-proof` o query `?appproof=`: Token de verificación anti-bot (se autogenera vía RSA-4096 si se omite)<br>• Header `x-refresh-token` o query `?refreshtoken=` / `?refreshToken=`: Token para auto-renovación de sesión ante HTTP 401 (fallback: `TYBA_REFRESH_TOKEN`)<br>• Query `days`: Días de histórico a recortar (default: `30`)<br>• Query `all`: `true` o `1` para persistir todo el histórico sin recortar<br>• Query `token`: Token de scraping si `SCRAPE_TOKEN` está configurado (recomendado para no interferir con `Authorization` de Tyba) | **Scraper Tyba (Credicorp Capital).** Descarga observaciones históricas y sincroniza el catálogo de 30 fondos. Retorna JSON `{ statusCode: 200, message, totalFondos, cuotasInsertadas }`. |
 
 ### Despliegue en Fly.io
 El despliegue en Fly.io utiliza un `Dockerfile` multi-stage ultraligero que compila el código TypeScript a JavaScript nativo y corre sobre Node 24 Alpine consumiendo menos de 40 MB de memoria:
@@ -179,7 +188,6 @@ fly deploy
 | `src/views/` | Plantilla HTML para Server-Side Rendering (SSR) del dashboard sin dependencias de cliente |
 | `src/server.ts` | Servidor Express unificado para despliegue en Fly.io y ejecución local |
 | `src/shared/` | Conexión singleton a MongoDB Atlas, lectura de parámetros SSM y utilidades de concurrencia |
-| `legacy/` | Código monolítico histórico en JavaScript puro (preservado para compatibilidad) |
 | `Dockerfile` | Imagen Docker multi-stage optimizada para Fly.io |
 | `fly.toml` | Archivo de configuración de la aplicación en Fly.io |
 | `scripts/` | Validadores de especificaciones (`validate_sdd.py`, `check_constitution.py`) |

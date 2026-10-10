@@ -10,6 +10,19 @@ Categorías: **Añadido** (algo nuevo) · **Cambiado** (algo existente se compor
 
 ### 2026-10-09
 
+#### Eliminado
+- Retiro definitivo del código y dependencias legacy (`legacy/`, `puppeteer`):
+  - Eliminación de la carpeta `legacy/` tras su absorción completa por el servidor Express en TypeScript (`src/server.ts`), la plantilla SSR (`src/views/html.ts`), el motor TEA (`src/domain/tea.ts`) y los adaptadores serverless en `src/scrapers/`.
+  - Desinstalación de la dependencia pesada `puppeteer` de `package.json`, eliminando el requerimiento de binarios de Chromium.
+  - Actualización de los scripts en `package.json` (`main`, `start`, `dev`) para apuntar directamente al servidor TypeScript (`dist/src/server.js`, `tsx watch src/server.ts`).
+
+#### Cambiado
+- Normalización y depuración visual de nombres de fondos mutuos para BBVA y ERNI (`src/shared/utils.ts`, `src/scrapers/bbva/catalog.ts`, `src/scrapers/bbva/parser.ts`, `src/scrapers/erni/parser.ts`, `src/domain/tea.ts`):
+  - Creación de la utilidad `normalizeFundName` para eliminar de manera determinística prefijos redundantes ("Fondo de Fondos" / "FDF").
+  - Limpieza de los fondos de BBVA que tenían el prefijo "Fondo de Fondos", asegurando la denominación directa "BBVA ..." (incluyendo "BBVA Acciones Globales Real Estate FMIV").
+  - Limpieza de los fondos de ERNI (Inteligo) con prefijo "FDF", mostrando directamente la denominación "IF ...".
+  - Saneamiento y migración en caliente de los 17 registros existentes en la colección `funds` de MongoDB Atlas.
+
 #### Añadido
 - Servidor Express unificado y vista Server-Side Rendering (SSR) en TypeScript (`src/server.ts`, `src/views/html.ts`):
   - Punto de entrada Express modular y ligero para despliegue en Fly.io o ejecución local sin dependencias de frameworks frontend (cero React, cero Vite) preservando la interactividad del dashboard clásico.

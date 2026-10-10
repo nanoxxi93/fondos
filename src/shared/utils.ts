@@ -59,6 +59,39 @@ export function capitalize(str: string): string {
   return str.toLowerCase().replace(/(^|\s)\S/g, (char) => char.toUpperCase());
 }
 
+/**
+ * Normaliza y sanea el nombre de un fondo mutuo removiendo prefijos redundantes
+ * como "Fondo de Fondos" o "FDF", asegurando que los fondos de BBVA conserven su prefijo
+ * canónico (ej. "BBVA Acciones...") y que los fondos de ERNI comiencen directamente en "IF...".
+ *
+ * @param name Nombre original del fondo
+ * @param source Fuente del fondo opcional ('bbva' | 'erni' | 'tyba')
+ * @returns Nombre normalizado sin prefijos redundantes
+ */
+export function normalizeFundName(name: string, source?: string): string {
+  if (!name) {
+    return "";
+  }
+
+  let cleaned = name.trim();
+
+  // 1. Remover prefijo 'Fondo de Fondos' o 'Fondo De Fondos'
+  cleaned = cleaned.replace(/^fondo\s+de\s+fondos\s+/i, "");
+
+  // 2. Remover prefijo 'FDF ' o 'FDF_'
+  cleaned = cleaned.replace(/^fdf[\s_]+/i, "");
+
+  // 3. Caso especial BBVA: si es el fondo Real Estate sin prefijo BBVA, asegurar 'BBVA Acciones...'
+  if (/^acciones\s+globales\s+real\s+estate/i.test(cleaned)) {
+    cleaned = `BBVA ${cleaned}`;
+  }
+
+  // 4. Normalizar espacios múltiples intermedios
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
+
+  return cleaned;
+}
+
 export interface ColorScheme {
   backgroundColor: string;
   borderColor: string;
