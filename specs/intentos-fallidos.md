@@ -5,7 +5,23 @@ Este documento registra enfoques, librerías y experimentos que **fallaron o fue
 > **Importante para la IA:** Antes de proponer usar una librería, cambiar un patrón de diseño o abordar un problema complejo, **revisa siempre este archivo**. Si lo que vas a proponer está aquí y no se cumple su condición de *Reconsiderar si*, descártalo y busca otra opción.
 
 ## Índice
+- [IF-002: Ingesta directa de BBVA desde AWS Lambda bloqueada con HTTP 403 por Akamai Bot Manager](#if-002-ingesta-directa-de-bbva-desde-aws-lambda-bloqueada-con-http-403-por-akamai-bot-manager)
 - [IF-001: Descarte de DynamoDB por cuellos de botella de RCU/WCU en analítica de dashboard](#if-001-descarte-de-dynamodb-por-cuellos-de-botella-de-rcuwcu-en-analítica-de-dashboard)
+
+---
+
+## IF-002: Ingesta directa de BBVA desde AWS Lambda bloqueada con HTTP 403 por Akamai Bot Manager
+* **Fecha:** 2026-10-10
+* **Problema que intentaba resolver:** Ingesta serverless diaria programada de BBVA Asset Management directamente desde AWS Lambda invocada por EventBridge Scheduler.
+* **Enfoque / Librería:** Invocación directa a `POST https://www.bbva.es/ASO/TechArchitecture/grantingTickets/V02` con `fetch` nativo de Node.js 24 en AWS Lambda (`us-east-1`).
+* **Por qué falló:**
+  1. **Bloqueo estricto por Akamai Bot Manager:** El dominio `www.bbva.es` está protegido por el WAF/CDN de Akamai (`ak_bmsc`, `bm_sz`, `Akamai-BM-Telemetry`). Akamai clasifica automáticamente los bloques CIDR de datacenters de AWS (`us-east-1` / AS16509) como tráfico automatizado/hosting de alto riesgo.
+  2. **Respuesta inmediata HTTP 403:** Al recibir la solicitud desde la IP de AWS Lambda, Akamai responde inmediatamente con `HTTP 403 Forbidden` antes de que la petición toque los servidores de backend de BBVA, impidiendo la adquisición del token de sesión efímero `tsec`.
+  3. **Verificación de lógica:** La misma petición con idéntico payload y cabeceras funciona al 100% desde conexiones residenciales/ISP (588 cuotas sincronizadas en 5 segundos).
+* **Decisión adoptada:** Deshabilitar la regla programada de EventBridge para BBVA en AWS CDK (`BbvaScraperScheduleRule` en `fondos-stack.ts`) y delegar la ejecución periódica a GitHub Actions (`.github/workflows/scrape-bbva.yml`) persistiendo directamente en MongoDB Atlas.
+* **Reconsiderar si:**
+  - Se añade un proxy residencial / smart proxy (ej. ScrapingBee, ScraperAPI, Webshare) en la Lambda para enrutar las peticiones a `bbva.es`.
+  - BBVA o la SMV habilitan una API pública/gubernamental sin filtrado de WAF para datacenters.
 
 ---
 

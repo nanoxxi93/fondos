@@ -8,6 +8,17 @@ Categorías: **Añadido** (algo nuevo) · **Cambiado** (algo existente se compor
 
 ## [Sin publicar]
 
+### 2026-10-10
+
+#### Añadido
+- Workflow programado de GitHub Actions para ingesta diaria de BBVA (`.github/workflows/scrape-bbva.yml`):
+  - Ejecución diaria programada a las 23:15 UTC (18:15 PET) y soporte manual bajo demanda (`workflow_dispatch` con parámetro opcional `days`).
+  - Sincronización directa contra MongoDB Atlas mediante el secret `MONGO_DB_URI` preservando presupuesto \$0.
+
+#### Cambiado
+- Deshabilitación de la regla de EventBridge Scheduler para BBVA en AWS CDK (`infra/lib/fondos-stack.ts`, `infra/test/fondos-stack.test.ts`):
+  - Se establece `enabled: false` en `BbvaScraperScheduleRule` para evitar ejecuciones fallidas con HTTP 403 provocadas por el filtrado de Akamai Bot Manager sobre IPs de datacenters de AWS (documentado en `specs/intentos-fallidos.md` como `IF-002`).
+
 ### 2026-10-09
 
 #### Eliminado

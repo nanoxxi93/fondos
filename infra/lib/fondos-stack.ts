@@ -81,9 +81,11 @@ export class FondosStack extends Stack {
     });
 
     // Regla de EventBridge Scheduler para disparo diario a las 23:15 UTC (18:15 hora de Lima)
+    // Deshabilitada: La ingesta de BBVA se delega a GitHub Actions debido al bloqueo de WAF/Akamai en AWS Lambda (ver IF-002).
     this.bbvaScraperScheduleRule = new events.Rule(this, 'BbvaScraperScheduleRule', {
       schedule: events.Schedule.cron({ minute: '15', hour: '23' }),
-      description: 'Disparo diario del scraper de BBVA post-cierre de mercado (18:15 PET / 23:15 UTC)',
+      enabled: false,
+      description: 'Disparo diario del scraper de BBVA (deshabilitado por bloqueo Akamai en Lambda - ver IF-002)',
     });
 
     this.bbvaScraperScheduleRule.addTarget(

@@ -7,6 +7,7 @@ export default [
     ignores: [
       "**/cdk.out/**",
       "dist/**",
+      "frontend/dist/**",
       "coverage/**",
       "node_modules/**",
     ],

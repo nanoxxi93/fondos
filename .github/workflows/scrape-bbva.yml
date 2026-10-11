@@ -1,0 +1,38 @@
+name: Scraper BBVA Diario
+
+on:
+  schedule:
+    # 23:15 UTC = 18:15 PET (Hora de Lima, post-cierre de mercado)
+    - cron: '15 23 * * *'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Cantidad de días a sincronizar'
+        required: false
+        default: '30'
+
+permissions:
+  contents: read
+
+jobs:
+  scrape-bbva:
+    name: Sincronizar Fondos BBVA
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ejecutar Scraper BBVA
+        run: npm run scrape:bbva
+        env:
+          MONGO_DB_URI: ${{ secrets.MONGO_DB_URI }}
+          DAYS: ${{ github.event.inputs.days || '30' }}

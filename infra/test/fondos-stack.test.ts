@@ -80,11 +80,11 @@ describe('FondosStack - Infraestructura Base', () => {
     });
   });
 
-  test('Debe configurar la regla de EventBridge Scheduler para disparo diario a las 23:15 UTC', () => {
+  test('Debe configurar la regla de EventBridge Scheduler para disparo diario a las 23:15 UTC (deshabilitada por WAF)', () => {
     template.hasResourceProperties('AWS::Events::Rule', {
       ScheduleExpression: 'cron(15 23 * * ? *)',
-      Description: 'Disparo diario del scraper de BBVA post-cierre de mercado (18:15 PET / 23:15 UTC)',
-      State: 'ENABLED',
+      Description: 'Disparo diario del scraper de BBVA (deshabilitado por bloqueo Akamai en Lambda - ver IF-002)',
+      State: 'DISABLED',
     });
   });
 
