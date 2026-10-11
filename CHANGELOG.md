@@ -23,8 +23,9 @@ Categorías: **Añadido** (algo nuevo) · **Cambiado** (algo existente se compor
   - Habilitación de disparador manual `workflow_dispatch`.
 
 #### Corregido
-- Compatibilidad de versiones de npm (`package.json`):
-  - Ajustar el motor requerido a `"npm": ">=11"` para admitir con precisión npm 11.x provisto por defecto en Node 24 dentro de runners de GitHub Actions, resolviendo fallo `EBADENGINE` en `npm ci`.
+- Compatibilidad y estandarización de npm 12 (`package.json`, `.github/workflows/`):
+  - Restaurar el requerimiento estricto de motor `"npm": ">=12"` en `package.json`.
+  - Añadir paso explícito `npm install -g npm@12` en los workflows de GitHub Actions (`scrape-bbva.yml`, `deploy-gh-pages.yml`) garantizando paridad exacta con el entorno local.
 - Resolución de configuración en entornos sin AWS SSM (`src/shared/config.ts`):
   - Priorizar `MONGO_DB_URI` directamente desde `process.env` sin exigir API keys innecesarias ni intentar conectar a AWS SSM Parameter Store en entornos no AWS (GitHub Actions).
   - Añadir fallback de región por defecto (`us-east-1`) al inicializar `SSMClient` evitando error `Region is missing`.
