@@ -21,7 +21,7 @@ Categorías: **Añadido** (algo nuevo) · **Cambiado** (algo existente se compor
 
 #### Corregido
 - Compatibilidad de versiones de npm (`package.json`):
-  - Ajustar el motor requerido a `"npm": ">=10"` para admitir npm 11.x provisto por defecto en Node 24 dentro de runners de GitHub Actions, resolviendo fallo `EBADENGINE` en `npm ci`.
+  - Ajustar el motor requerido a `"npm": ">=11"` para admitir con precisión npm 11.x provisto por defecto en Node 24 dentro de runners de GitHub Actions, resolviendo fallo `EBADENGINE` en `npm ci`.
 
 ### 2026-10-09
 
