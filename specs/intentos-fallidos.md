@@ -19,6 +19,7 @@ Este documento registra enfoques, librerías y experimentos que **fallaron o fue
   2. **Respuesta inmediata HTTP 403:** Al recibir la solicitud desde la IP de AWS Lambda, Akamai responde inmediatamente con `HTTP 403 Forbidden` antes de que la petición toque los servidores de backend de BBVA, impidiendo la adquisición del token de sesión efímero `tsec`.
   3. **Verificación de lógica:** La misma petición con idéntico payload y cabeceras funciona al 100% desde conexiones residenciales/ISP (588 cuotas sincronizadas en 5 segundos).
 * **Decisión adoptada:** Deshabilitar la regla programada de EventBridge para BBVA en AWS CDK (`BbvaScraperScheduleRule` en `fondos-stack.ts`) y delegar la ejecución periódica a GitHub Actions (`.github/workflows/scrape-bbva.yml`) persistiendo directamente en MongoDB Atlas.
+* **Resultado:** Confirmado y verificado en GitHub Actions (`ubuntu-latest`): el runner adquiere el token `tsec` y sincroniza los 21 fondos y 588 cuotas exitosamente en ~5 segundos sin bloqueos de WAF.
 * **Reconsiderar si:**
   - Se añade un proxy residencial / smart proxy (ej. ScrapingBee, ScraperAPI, Webshare) en la Lambda para enrutar las peticiones a `bbva.es`.
   - BBVA o la SMV habilitan una API pública/gubernamental sin filtrado de WAF para datacenters.
