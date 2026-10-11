@@ -5,6 +5,18 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'specs/**'
+      - 'frontend/**'
+      - 'infra/**'
+      - '.github/workflows/scrape-bbva.yml'
+      - '.github/workflows/deploy-gh-pages.yml'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'CLAUDE.md'
+      - '.gitignore'
+      - '.gitattributes'
+  workflow_dispatch:
 jobs:
   deploy:
     name: Deploy app

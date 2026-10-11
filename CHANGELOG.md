@@ -18,6 +18,9 @@ Categorías: **Añadido** (algo nuevo) · **Cambiado** (algo existente se compor
 #### Cambiado
 - Deshabilitación de la regla de EventBridge Scheduler para BBVA en AWS CDK (`infra/lib/fondos-stack.ts`, `infra/test/fondos-stack.test.ts`):
   - Se establece `enabled: false` en `BbvaScraperScheduleRule` para evitar ejecuciones fallidas con HTTP 403 provocadas por el filtrado de Akamai Bot Manager sobre IPs de datacenters de AWS (documentado en `specs/intentos-fallidos.md` como `IF-002`).
+- Optimización de consumo de CI/CD (`.github/workflows/fly-deploy.yml`):
+  - Inclusión de filtros `paths-ignore` para omitir cambios en documentación, frontend, infraestructura y workflows de scrapers, evitando despliegues redundantes en Fly.io y ahorrando minutos de GitHub Actions.
+  - Habilitación de disparador manual `workflow_dispatch`.
 
 #### Corregido
 - Compatibilidad de versiones de npm (`package.json`):
