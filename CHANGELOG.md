@@ -19,6 +19,10 @@ Categorías: **Añadido** (algo nuevo) · **Cambiado** (algo existente se compor
 - Deshabilitación de la regla de EventBridge Scheduler para BBVA en AWS CDK (`infra/lib/fondos-stack.ts`, `infra/test/fondos-stack.test.ts`):
   - Se establece `enabled: false` en `BbvaScraperScheduleRule` para evitar ejecuciones fallidas con HTTP 403 provocadas por el filtrado de Akamai Bot Manager sobre IPs de datacenters de AWS (documentado en `specs/intentos-fallidos.md` como `IF-002`).
 
+#### Corregido
+- Compatibilidad de versiones de npm (`package.json`):
+  - Ajustar el motor requerido a `"npm": ">=10"` para admitir npm 11.x provisto por defecto en Node 24 dentro de runners de GitHub Actions, resolviendo fallo `EBADENGINE` en `npm ci`.
+
 ### 2026-10-09
 
 #### Eliminado
