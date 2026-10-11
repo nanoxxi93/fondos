@@ -23,7 +23,7 @@ export async function getConfig(): Promise<AppConfig> {
   const envErniApiKey = process.env.ERNI_APIKEY;
   const envBbvaApiKey = process.env.BBVA_APIKEY;
 
-  if (envMongoUri && (envErniApiKey || envBbvaApiKey)) {
+  if (envMongoUri) {
     cachedConfig = {
       mongoDbUri: envMongoUri,
       erniApiKey: envErniApiKey,
@@ -38,7 +38,9 @@ export async function getConfig(): Promise<AppConfig> {
   const erniParam = `${ssmPrefix}/erni_apikey`;
   const bbvaParam = `${ssmPrefix}/bbva_apikey`;
 
-  const ssmClient = new SSMClient({});
+  const ssmClient = new SSMClient({
+    region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "us-east-1",
+  });
   const command = new GetParametersCommand({
     Names: [mongoParam, erniParam, bbvaParam],
     WithDecryption: true,

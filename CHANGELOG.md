@@ -22,6 +22,9 @@ Categorías: **Añadido** (algo nuevo) · **Cambiado** (algo existente se compor
 #### Corregido
 - Compatibilidad de versiones de npm (`package.json`):
   - Ajustar el motor requerido a `"npm": ">=11"` para admitir con precisión npm 11.x provisto por defecto en Node 24 dentro de runners de GitHub Actions, resolviendo fallo `EBADENGINE` en `npm ci`.
+- Resolución de configuración en entornos sin AWS SSM (`src/shared/config.ts`):
+  - Priorizar `MONGO_DB_URI` directamente desde `process.env` sin exigir API keys innecesarias ni intentar conectar a AWS SSM Parameter Store en entornos no AWS (GitHub Actions).
+  - Añadir fallback de región por defecto (`us-east-1`) al inicializar `SSMClient` evitando error `Region is missing`.
 
 ### 2026-10-09
 
