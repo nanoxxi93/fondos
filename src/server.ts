@@ -86,8 +86,7 @@ export function createApp(): express.Express {
   app.get("/api/erni", requireScrapeToken, async (req: Request, res: Response, next: NextFunction) => {
     try {
       const days = parseDays(req.query.days);
-      const months = Math.max(1, Math.ceil(days / 30));
-      const result = await erniHandler({ months });
+      const result = await erniHandler({ days });
       res.status(result.statusCode).json(result);
     } catch (err) {
       next(err);

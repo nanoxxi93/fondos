@@ -1,7 +1,7 @@
 import type { FondosActivosItem, CuotaItem, TarifarioItem } from "./types.js";
 import type { IQuota } from "../../shared/models/quota.model.js";
 import type { IFund } from "../../shared/models/fund.model.js";
-import { toUtcMidnight, normalizeFundName } from "../../shared/utils.js";
+import { toUtcMidnight, normalizeFundName, toIsoDateString } from "../../shared/utils.js";
 
 export interface ActiveSerieSelection {
   serie: string;
@@ -104,5 +104,28 @@ export function toFundMetadata(
     fee: serieInfo.fee,
     serie: serieInfo.serie,
     updatedAt: new Date(),
+  };
+}
+
+/**
+ * Calcula el rango de fechas [fromDate, toDate] en formato YYYY-MM-DD
+ * para la consulta de retornos pasados.
+ */
+export function calculateDateRange(
+  days = 30,
+  customFromDate?: string,
+  customToDate?: string
+): { fromDate: string; toDate: string } {
+  if (customFromDate && customToDate) {
+    return { fromDate: customFromDate, toDate: customToDate };
+  }
+
+  const to = new Date();
+  const from = new Date(to);
+  from.setDate(to.getDate() - days);
+
+  return {
+    fromDate: toIsoDateString(from),
+    toDate: toIsoDateString(to),
   };
 }

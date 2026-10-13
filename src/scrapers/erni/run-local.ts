@@ -1,13 +1,17 @@
 import "dotenv/config";
 import { handler } from "./handler.js";
 import { disconnectDatabase } from "../../shared/db.js";
-import { fetchFondosActivos, fetchFondoInvertir } from "./client.js";
-import { filterActiveFunds, selectActiveSerie } from "./parser.js";
+import { fetchFondosActivos, fetchFondoValorCuota } from "./client.js";
+import {
+  calculateDateRange,
+  filterActiveFunds,
+  selectActiveSerie,
+} from "./parser.js";
 import { getConfig } from "../../shared/config.js";
 
 async function main(): Promise<void> {
   console.info("Iniciando ejecución local para ingesta ERNI...");
-  const months = process.env.MONTHS ? parseInt(process.env.MONTHS, 10) : 1;
+  const days = process.env.DAYS ? parseInt(process.env.DAYS, 10) : 30;
 
   // Si no hay base de datos configurada en .env, ejecutamos en modo prueba (dry-run)
   if (!process.env.MONGO_DB_URI) {
@@ -40,28 +44,37 @@ async function main(): Promise<void> {
       `Descubrimiento ERNI: ${allFondos.length} fondos totales encontrados, ${activeFondos.length} operativos, ${omittedCount} omitidos.`
     );
 
+    const { fromDate, toDate } = calculateDateRange(days);
     // Fondos muestra representativos con distintas series: 01 (estándar '-'), 16 (digital 'C'), 56 (serie 'A')
     const sampleIds = ["01", "16", "56"];
-    const sampleFunds = activeFondos.filter((f) => sampleIds.includes(f.idFondo));
-    const fundsToTest = sampleFunds.length > 0 ? sampleFunds : activeFondos.slice(0, 3);
+    const sampleFunds = activeFondos.filter((f) =>
+      sampleIds.includes(f.idFondo)
+    );
+    const fundsToTest =
+      sampleFunds.length > 0 ? sampleFunds : activeFondos.slice(0, 3);
 
     for (const fondo of fundsToTest) {
       const serieInfo = selectActiveSerie(fondo);
       const serieCodigo = serieInfo ? serieInfo.serie : "-";
 
       console.info(
-        `Detalle verificado para [${fondo.idFondo}]: "${fondo.nombreFondo.trim()}" (${fondo.moneda.nombreMoneda}) - Serie: ${serieCodigo}`
+        `Detalle verificado para [${
+          fondo.idFondo
+        }]: "${fondo.nombreFondo.trim()}" (${
+          fondo.moneda.nombreMoneda
+        }) - Serie: ${serieCodigo}`
       );
 
-      const invertirData = await fetchFondoInvertir(apiKey, {
+      const valorCuotaData = await fetchFondoValorCuota(apiKey, {
         idFondo: fondo.idFondo,
         serieCodigo,
-        tiempoMeses: months,
+        fechaInicio: fromDate,
+        fechaFin: toDate,
       });
 
-      const count = invertirData.data?.listaValorCuota?.length || 0;
+      const count = valorCuotaData.data?.listaValorCuota?.length || 0;
       console.info(
-        `Cuotas verificadas para [${fondo.idFondo}]: ${count} cuotas encontradas para un periodo de ${months} mes(es).`
+        `Cuotas verificadas para [${fondo.idFondo}]: ${count} cuotas encontradas entre ${fromDate} y ${toDate}.`
       );
     }
 
@@ -72,8 +85,11 @@ async function main(): Promise<void> {
   }
 
   // Si MONGO_DB_URI está configurado, ejecutamos el ciclo completo de la Lambda
-  const result = await handler({ months });
-  console.info("Resultado de ejecución completa ERNI:", JSON.stringify(result, null, 2));
+  const result = await handler({ days });
+  console.info(
+    "Resultado de ejecución completa ERNI:",
+    JSON.stringify(result, null, 2)
+  );
   await disconnectDatabase();
 }
 

@@ -2,8 +2,10 @@ import { Value } from "@sinclair/typebox/value";
 import {
   FondosActivosResponseSchema,
   InvertirResponseSchema,
+  ValorCuotaResponseSchema,
   type FondosActivosResponse,
   type InvertirResponse,
+  type ValorCuotaResponse,
 } from "./types.js";
 
 const BASE_URL_ONBOARDING =
@@ -21,10 +23,19 @@ export interface FetchInvertirParams {
   tiempoMeses?: number;
 }
 
+export interface FetchValorCuotaParams {
+  idFondo: string;
+  serieCodigo: string;
+  fechaInicio: string;
+  fechaFin: string;
+}
+
 /**
  * Consulta la API de Inteligo para obtener el catálogo completo de fondos mutuos activos.
  */
-export async function fetchFondosActivos(apiKey: string): Promise<FondosActivosResponse> {
+export async function fetchFondosActivos(
+  apiKey: string
+): Promise<FondosActivosResponse> {
   const response = await fetch(BASE_URL_ONBOARDING, {
     method: "GET",
     headers: {
@@ -60,7 +71,12 @@ export async function fetchFondoInvertir(
   apiKey: string,
   params: FetchInvertirParams
 ): Promise<InvertirResponse> {
-  const { idFondo, serieCodigo, montoInversion = 500, tiempoMeses = 1 } = params;
+  const {
+    idFondo,
+    serieCodigo,
+    montoInversion = 500,
+    tiempoMeses = 1,
+  } = params;
 
   const url = `${BASE_URL_ERNI}/${encodeURIComponent(
     idFondo
@@ -90,6 +106,49 @@ export async function fetchFondoInvertir(
       .join(", ");
     throw new Error(
       `La respuesta de /invertir para fondo ${idFondo} no coincide con el esquema: ${errors}`
+    );
+  }
+
+  return json;
+}
+
+/**
+ * Consulta la serie histórica diaria de valores cuota para un fondo específico de ERNI.
+ */
+export async function fetchFondoValorCuota(
+  apiKey: string,
+  params: FetchValorCuotaParams
+): Promise<ValorCuotaResponse> {
+  const { idFondo, serieCodigo, fechaInicio, fechaFin } = params;
+
+  const url = `${BASE_URL_ERNI}/${encodeURIComponent(
+    idFondo
+  )}/valor-cuota?serieCodigo=${encodeURIComponent(
+    serieCodigo
+  )}&tipoPersona=natural&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "ocp-apim-subscription-key": apiKey,
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Error al consultar valor cuota para fondo ${idFondo} (Serie ${serieCodigo}): HTTP ${response.status} ${response.statusText}`
+    );
+  }
+
+  const json = await response.json();
+
+  if (!Value.Check(ValorCuotaResponseSchema, json)) {
+    const errors = [...Value.Errors(ValorCuotaResponseSchema, json)]
+      .map((e) => `${e.path}: ${e.message}`)
+      .join(", ");
+    throw new Error(
+      `La respuesta de /valor-cuota para fondo ${idFondo} no coincide con el esquema: ${errors}`
     );
   }
 

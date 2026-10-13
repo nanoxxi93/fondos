@@ -4,12 +4,13 @@ import { getConfig } from "../../shared/config.js";
 import { pMap } from "../../shared/utils.js";
 import { ErniQuotaModel } from "../../shared/models/quota.model.js";
 import { FundModel } from "../../shared/models/fund.model.js";
-import { fetchFondosActivos, fetchFondoInvertir } from "./client.js";
+import { fetchFondosActivos, fetchFondoValorCuota } from "./client.js";
 import {
   selectActiveSerie,
   filterActiveFunds,
   normalizeQuotas,
   toFundMetadata,
+  calculateDateRange,
 } from "./parser.js";
 import {
   LambdaEventSchema,
@@ -19,12 +20,18 @@ import {
 
 /**
  * AWS Lambda Handler principal para la ingesta serverless de fondos mutuos de ERNI (Inteligo).
- * Invocado por EventBridge Scheduler de forma diaria o manualmente con { months: number }.
+ * Invocado por EventBridge Scheduler de forma diaria o manualmente con { days?: number, fromDate?: string, toDate?: string }.
  */
 export async function handler(event?: LambdaEvent): Promise<LambdaResult> {
   // 1. Validar parámetros de entrada
-  const validEvent = event && Value.Check(LambdaEventSchema, event) ? event : {};
-  const months = validEvent.months ?? 1;
+  const validEvent =
+    event && Value.Check(LambdaEventSchema, event) ? event : {};
+  const days = validEvent.days ?? 30;
+  const { fromDate, toDate } = calculateDateRange(
+    days,
+    validEvent.fromDate,
+    validEvent.toDate
+  );
 
   // 2. Conectar a base de datos y resolver credenciales
   const { erniApiKey } = await getConfig();
@@ -74,16 +81,19 @@ export async function handler(event?: LambdaEvent): Promise<LambdaResult> {
       }
 
       try {
-        const invertirData = await fetchFondoInvertir(erniApiKey, {
+        const valorCuotaData = await fetchFondoValorCuota(erniApiKey, {
           idFondo: fondo.idFondo,
           serieCodigo: serieInfo.serie,
-          tiempoMeses: months,
+          fechaInicio: fromDate,
+          fechaFin: toDate,
         });
 
-        const rawCuotas = invertirData.data?.listaValorCuota || [];
+        const rawCuotas = valorCuotaData.data?.listaValorCuota || [];
         if (rawCuotas.length === 0) {
           console.info(
-            `Fondo ${fondo.idFondo} (${fondo.nombreFondo.trim()}): 0 cuotas históricas disponibles (fondo nuevo o sin datos).`
+            `Fondo ${
+              fondo.idFondo
+            } (${fondo.nombreFondo.trim()}): 0 cuotas históricas disponibles (fondo nuevo o sin datos).`
           );
           successfulFunds++;
           return;
@@ -110,7 +120,9 @@ export async function handler(event?: LambdaEvent): Promise<LambdaResult> {
       } catch (error) {
         failedFunds++;
         console.error(
-          `Error al sincronizar fondo ${fondo.idFondo} (${fondo.nombreFondo.trim()}): ${
+          `Error al sincronizar fondo ${
+            fondo.idFondo
+          } (${fondo.nombreFondo.trim()}): ${
             error instanceof Error ? error.message : String(error)
           }`
         );

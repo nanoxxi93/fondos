@@ -80,13 +80,38 @@ export const InvertirResponseSchema = Type.Object(
   { additionalProperties: true }
 );
 
+export const ValorCuotaDataSchema = Type.Object(
+  {
+    listaValorCuota: Type.Array(CuotaItemSchema),
+    primerRegistroValorCuota: Type.Optional(
+      Type.Union([CuotaItemSchema, Type.Null()])
+    ),
+    ultimoRegistroValorCuota: Type.Optional(
+      Type.Union([CuotaItemSchema, Type.Null()])
+    ),
+  },
+  { additionalProperties: true }
+);
+
+export const ValorCuotaResponseSchema = Type.Object(
+  {
+    code: Type.String(),
+    data: ValorCuotaDataSchema,
+    message: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+  },
+  { additionalProperties: true }
+);
+
 export type CuotaItem = Static<typeof CuotaItemSchema>;
 export type InvertirResponse = Static<typeof InvertirResponseSchema>;
+export type ValorCuotaResponse = Static<typeof ValorCuotaResponseSchema>;
 
 // --- Esquemas de Invocación y Resultado de AWS Lambda ---
 
 export const LambdaEventSchema = Type.Object({
-  months: Type.Optional(Type.Integer({ minimum: 1, maximum: 60 })),
+  days: Type.Optional(Type.Integer({ minimum: 1, maximum: 3650 })),
+  fromDate: Type.Optional(Type.String()),
+  toDate: Type.Optional(Type.String()),
 });
 
 export const ExecutionSummarySchema = Type.Object({

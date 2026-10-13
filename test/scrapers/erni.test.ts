@@ -4,10 +4,12 @@ import {
   filterActiveFunds,
   normalizeQuotas,
   toFundMetadata,
+  calculateDateRange,
 } from "../../src/scrapers/erni/parser.js";
 import {
   fetchFondosActivos,
   fetchFondoInvertir,
+  fetchFondoValorCuota,
 } from "../../src/scrapers/erni/client.js";
 import { pMap, toUtcMidnight } from "../../src/shared/utils.js";
 import type { FondosActivosItem } from "../../src/scrapers/erni/types.js";
@@ -148,6 +150,20 @@ describe("ERNI Scraper - Parser y Normalización", () => {
     const meta = toFundMetadata(fondoConFdf, { serie: "A", fee: 1.2, isDigital: false });
     expect(meta.name).toBe("IF 49 Rendimiento Global 360 FMIV");
   });
+
+  it("calculateDateRange respeta fechas personalizadas cuando se proveen ambas", () => {
+    const range = calculateDateRange(30, "2026-01-01", "2026-01-31");
+    expect(range).toEqual({ fromDate: "2026-01-01", toDate: "2026-01-31" });
+  });
+
+  it("calculateDateRange calcula el rango dinámico en formato YYYY-MM-DD", () => {
+    const range = calculateDateRange(10);
+    expect(range.fromDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(range.toDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(new Date(range.toDate).getTime()).toBeGreaterThan(
+      new Date(range.fromDate).getTime()
+    );
+  });
 });
 
 describe("Utilidades - pMap y concurrencia", () => {
@@ -274,6 +290,86 @@ describe("Cliente HTTP ERNI - TypeBox Validation", () => {
 
     await expect(
       fetchFondoInvertir("fake-key", { idFondo: "04", serieCodigo: "-" })
+    ).rejects.toThrow("HTTP 500");
+  });
+
+  it("fetchFondoValorCuota valida respuesta de valores cuota con TypeBox", async () => {
+    const mockValorCuotaResponse = {
+      code: "SUCCESS",
+      data: {
+        listaValorCuota: [
+          { fecha: "2026-10-10T00:00:00", numeroValorCuota: 235.12 },
+        ],
+        primerRegistroValorCuota: null,
+        ultimoRegistroValorCuota: null,
+      },
+    };
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockValorCuotaResponse,
+      })
+    );
+
+    const result = await fetchFondoValorCuota("fake-key", {
+      idFondo: "04",
+      serieCodigo: "-",
+      fechaInicio: "2026-10-01",
+      fechaFin: "2026-10-10",
+    });
+
+    expect(result.code).toBe("SUCCESS");
+    expect(result.data.listaValorCuota).toHaveLength(1);
+    expect(result.data.listaValorCuota[0].numeroValorCuota).toBe(235.12);
+  });
+
+  it("fetchFondoValorCuota arroja error descriptivo ante esquema no conforme", async () => {
+    const corruptResponse = {
+      code: "SUCCESS",
+      data: {
+        // Falta listaValorCuota
+      },
+    };
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => corruptResponse,
+      })
+    );
+
+    await expect(
+      fetchFondoValorCuota("fake-key", {
+        idFondo: "04",
+        serieCodigo: "-",
+        fechaInicio: "2026-10-01",
+        fechaFin: "2026-10-10",
+      })
+    ).rejects.toThrow(
+      "La respuesta de /valor-cuota para fondo 04 no coincide con el esquema"
+    );
+  });
+
+  it("fetchFondoValorCuota arroja error ante HTTP 500", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+      })
+    );
+
+    await expect(
+      fetchFondoValorCuota("fake-key", {
+        idFondo: "04",
+        serieCodigo: "-",
+        fechaInicio: "2026-10-01",
+        fechaFin: "2026-10-10",
+      })
     ).rejects.toThrow("HTTP 500");
   });
 });

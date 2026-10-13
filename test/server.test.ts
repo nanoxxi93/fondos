@@ -163,7 +163,7 @@ describe("Express Server (src/server.ts)", () => {
 
     const resValid = await fetch(`${baseUrl}/api/erni?token=secreto-123&days=7`);
     expect(resValid.status).toBe(200);
-    expect(erniHandler).toHaveBeenCalledWith({ months: 1 });
+    expect(erniHandler).toHaveBeenCalledWith({ days: 7 });
   });
 
   it("debe invocar handler de BBVA en GET /api/bbva", async () => {
